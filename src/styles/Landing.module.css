@@ -1,0 +1,201 @@
+/* Scoped Styles for Landing Page */
+
+/* Base container centering */
+.pageContainer {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Navbar */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 5%;
+  background: var(--color-bg-card);
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.logoArea {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 800;
+  font-size: 1.5rem;
+  letter-spacing: -0.025em;
+  color: var(--color-text-main);
+}
+
+.logoIcon {
+  background: var(--color-primary-dark);
+  color: white;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-weight: bold;
+}
+
+.navLinks {
+  display: flex;
+  gap: 2rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.navLinks a:hover {
+  color: var(--color-primary-light);
+}
+
+.navActions {
+  display: flex;
+  gap: 1rem;
+}
+
+.btnOutline {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-text-muted);
+  border-radius: var(--radius-md);
+  color: var(--color-text-main);
+  background: transparent;
+  font-weight: 600;
+}
+.btnOutline:hover {
+  background: var(--color-bg-main);
+  border-color: var(--color-text-main);
+}
+
+.btnSolid {
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  color: white;
+  background: var(--color-primary-dark);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.btnSolid:hover {
+  background: var(--color-primary);
+}
+
+/* Hero Section */
+.hero {
+  position: relative;
+  background: linear-gradient(to bottom, rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.95)); /* fallback */
+  color: white;
+  padding: 8rem 5% 6rem;
+  text-align: center;
+  /* We will dynamically set the bg image via inline style if passed, or just use nice gradient */
+}
+
+/* Replace placeholder if bg image is handled at component level */
+
+.heroBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-full);
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.heroBadgeDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-success);
+}
+
+.heroTitle {
+  font-size: 4.5rem;
+  line-height: 1.1;
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+  max-width: 900px;
+  margin-inline: auto;
+}
+
+.heroTitle span {
+  color: var(--color-accent); /* The blue 'Event Planning' word */
+}
+
+.heroDesc {
+  font-size: 1.25rem;
+  max-width: 700px;
+  margin-inline: auto;
+  color: #cbd5e1;
+  margin-bottom: 3rem;
+}
+
+.heroActions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 4rem;
+}
+
+.btnHeroPrimary {
+  background: white;
+  color: var(--color-primary-dark);
+  padding: 1rem 2rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 1.125rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.btnHeroPrimary:hover {
+  background: #f8fafc;
+  transform: translateY(-2px);
+}
+
+.btnHeroSecondary {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 1.125rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.btnHeroSecondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.heroStats {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.statItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.statItem svg {
+  color: var(--color-success);
+}

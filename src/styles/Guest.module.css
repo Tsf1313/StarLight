@@ -1,0 +1,138 @@
+/* Scoped Styles for Guest Participant App */
+
+.guestAppWrapper {
+  display: flex;
+  justify-content: center;
+  background-color: #e2e8f0; /* Darker backdrop on desktop to simulate mobile bounds */
+  height: 100vh;
+  overflow: hidden;
+}
+
+.mobileContainer {
+  width: 100%;
+  max-width: var(--mobile-width-max);
+  background: var(--color-bg-main);
+  height: 100vh;
+  box-shadow: var(--shadow-xl); /* Heavy shadow on desktop */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Top App Bar */
+.topAppBar {
+  background: white;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.25rem;
+  border-bottom: 1px solid #f1f5f9;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.appBrand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 800;
+  font-size: 1.125rem;
+}
+
+.appBrandIcon {
+  background: var(--color-primary-dark);
+  color: white;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.75rem;
+}
+
+.topActions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.iconBtn {
+  color: var(--color-text-muted);
+  position: relative;
+}
+
+.iconBtn:hover {
+  color: var(--color-text-main);
+}
+
+.badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  background: var(--color-danger);
+  border-radius: 50%;
+  border: 1px solid white;
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+/* Scrollable Main Area */
+.mainScrollArea {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 80px; /* Space for bottom nav */
+}
+
+/* Bottom Nav */
+.bottomNav {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: white;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 40;
+}
+
+.navItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--color-text-muted);
+  font-size: 0.625rem;
+  font-weight: 600;
+  transition: color 0.2s ease;
+  text-decoration: none;
+}
+
+.navItem.active {
+  color: var(--color-accent);
+}
+
+.navItem svg {
+  width: 20px;
+  height: 20px;
+}
