@@ -16,6 +16,7 @@ import VenueMapPage from './pages/host/VenueMapPage';
 import CustomizePage from './pages/host/CustomizePage';
 import AttendancePage from './pages/host/AttendancePage';
 import TournamentPage from './pages/host/TournamentPage';
+import FeedbackPage from './pages/host/FeedbackPage';
 
 // Guest Pages
 import GuestHomePage from './pages/guest/GuestHomePage';
@@ -34,17 +35,18 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
 
         {/* Host Dashboard Routes */}
-        <Route path="/dashboard" element={<HostLayout />}>
+        <Route path="/dashboard/*" element={<HostLayout />}>
           <Route index element={<DashboardOverview />} />
           <Route path="attendance" element={<AttendancePage />} />
           <Route path="tournament" element={<TournamentPage />} />
           <Route path="brochure" element={<BrochurePage />} />
           <Route path="venue-map" element={<VenueMapPage />} />
           <Route path="customize" element={<CustomizePage />} />
+          <Route path="feedback" element={<FeedbackPage />} />
         </Route>
 
         {/* Guest App Routes */}
-        <Route path="/guest" element={<GuestLayout />}>
+        <Route path="/guest/*" element={<GuestLayout />}>
           <Route index element={<GuestHomePage />} />
           <Route path="brochure" element={<GuestBrochurePage />} />
           <Route path="map" element={<GuestVenueMapPage />} />

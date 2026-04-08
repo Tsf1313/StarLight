@@ -29,16 +29,47 @@ export default function GuestVenueMapPage() {
           {/* Map Selector */}
           {initialMaps.length > 1 && (
             <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Select Level / Area</label>
-              <select 
-                value={activeMapId} 
-                onChange={(e) => setActiveMapId(Number(e.target.value))}
-                style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', background: 'white', fontSize: '0.95rem', fontWeight: 600, color: 'var(--color-text-main)', boxShadow: 'var(--shadow-sm)' }}
-              >
-                {initialMaps.map(m => (
-                  <option key={m.id} value={m.id}>{m.name}</option>
-                ))}
-              </select>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '0.75rem', textTransform: 'uppercase' }}>Select Level / Area</label>
+              <div style={{ display: 'flex', gap: '1rem', overflowX: 'auto', paddingBottom: '0.5rem', WebkitOverflowScrolling: 'touch' }}>
+                {initialMaps.map((m) => {
+                  const isSelected = activeMapId === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setActiveMapId(m.id)}
+                      className="hover-lift"
+                      style={{
+                        flex: '0 0 240px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        textAlign: 'left',
+                        borderRadius: '18px',
+                        overflow: 'hidden',
+                        border: isSelected ? '2px solid var(--color-primary)' : '1px solid #e2e8f0',
+                        background: isSelected ? '#eff6ff' : 'white',
+                        cursor: 'pointer',
+                        minHeight: '148px',
+                        boxShadow: isSelected ? '0 12px 24px rgba(59,130,246,0.08)' : '0 6px 16px rgba(15,23,42,0.04)',
+                        minWidth: '240px'
+                      }}
+                    >
+                      <div style={{ minHeight: '90px', background: m.image ? `url(${m.image}) center/cover no-repeat` : '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {!m.image && (
+                          <div style={{ textAlign: 'center', color: '#94a3b8', padding: '0.75rem' }}>
+                            <Map size={20} />
+                            <div style={{ fontSize: '0.75rem', marginTop: '0.35rem' }}>No preview</div>
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                        <span style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>{m.name}</span>
+                        <span style={{ fontSize: '0.85rem', color: '#64748b' }}>{m.zones.length} locations</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
 

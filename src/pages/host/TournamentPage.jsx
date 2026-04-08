@@ -10,6 +10,7 @@ export default function TournamentPage() {
   const [tournaments, setTournaments] = useState(initialTournaments);
   const [activeTournamentId, setActiveTournamentId] = useState(initialTournaments[0].id);
   const activeTournament = tournaments.find(t => t.id === activeTournamentId) || tournaments[0];
+  const isExternalTournament = activeTournament?.previewType === 'external';
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState(null);
@@ -17,7 +18,9 @@ export default function TournamentPage() {
   const [tournamentForm, setTournamentForm] = useState({
     name: '',
     participants: '',
-    format: 'bracket'
+    format: 'bracket',
+    previewType: 'bracket',
+    externalUrl: ''
   });
 
   const handleEditClick = () => {
@@ -95,75 +98,136 @@ export default function TournamentPage() {
       <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
          
          {activeTab === 'bracket' && (
-           <div style={{ padding: '2rem', minHeight: '400px', display: 'flex', flexDirection: 'column' }}>
-             
-             {/* Tournament Selector */}
-             <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <span style={{ fontWeight: 700, color: '#64748b', fontSize: '0.875rem' }}>Select Tournament:</span>
-                <select 
-                  value={activeTournamentId}
-                  onChange={(e) => setActiveTournamentId(Number(e.target.value))}
-                  style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', background: '#f8fafc', fontWeight: 700, color: 'var(--color-text-main)', cursor: 'pointer' }}
-                >
-                  {tournaments.map(t => (
-                    <option key={t.id} value={t.id}>{t.name}</option>
-                  ))}
-                </select>
-             </div>
+           <div style={{ padding: '2rem', minHeight: '400px' }}>
+             <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+               <div style={{ flex: '0 0 420px', minWidth: '320px', background: 'white', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 20px 50px -30px rgba(15, 23, 42, 0.15)' }}>
+                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                   <div>
+                     <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--color-text-main)' }}>Tournaments</div>
+                     <div style={{ fontSize: '0.875rem', color: '#64748b' }}>{tournaments.length} total</div>
+                   </div>
+                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.35rem 0.75rem', borderRadius: '999px', background: '#f8fafc', color: '#475569', fontSize: '0.75rem', fontWeight: 700 }}>{activeTournament.status}</div>
+                 </div>
+                 <div style={{ display: 'grid', gap: '1rem', maxHeight: 'calc(100vh - 260px)', overflowY: 'auto', paddingRight: '0.5rem', marginBottom: '0.75rem' }}>
+                   {tournaments.map((t) => {
+                      const isSelected = t.id === activeTournamentId;
+                      return (
+                         <button
+                            key={t.id}
+                            onClick={() => setActiveTournamentId(t.id)}
+                            className="hover-lift"
+                            style={{
+                               textAlign: 'left',
+                               padding: '1rem',
+                               borderRadius: '16px',
+                               border: isSelected ? '2px solid var(--color-primary-dark)' : '1px solid #e2e8f0',
+                               background: isSelected ? '#eff6ff' : 'white',
+                               cursor: 'pointer',
+                               transition: 'all 0.2s ease',
+                               minHeight: '120px',
+                               display: 'flex',
+                               flexDirection: 'column',
+                               justifyContent: 'space-between'
+                            }}
+                         >
+                            <div>
+                               <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--color-text-main)', marginBottom: '0.5rem' }}>{t.name}</div>
+                               <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1rem' }}>{t.participants.length} participants</div>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                               <span style={{ fontSize: '0.8rem', fontWeight: 700, color: isSelected ? 'var(--color-primary-dark)' : '#475569', textTransform: 'uppercase' }}>{t.status}</span>
+                               <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{t.format === 'bracket' ? 'Bracket' : t.format}</span>
+                            </div>
+                         </button>
+                      );
+                   })}
+                 </div>
+                 <div style={{ color: '#64748b', fontSize: '0.85rem', lineHeight: 1.6 }}>Scroll vertically to see more tournaments. Selecting a card will refresh the bracket preview on the right.</div>
+               </div>
 
-             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>{activeTournament.name}</h3>
-                  <button onClick={handleEditClick} className="btnOutline scale-btn" style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                    <Edit size={14} /> Edit Settings
-                  </button>
-                </div>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', background: activeTournament.status === 'Live' ? '#fef2f2' : '#f8fafc', color: activeTournament.status === 'Live' ? 'var(--color-danger)' : '#64748b', border: activeTournament.status === 'Live' ? '1px solid #fca5a5' : '1px solid #cbd5e1', padding: '0.25rem 0.75rem', borderRadius: '99px', fontSize: '0.75rem', fontWeight: 700 }}>
-                   <div style={{ width: 6, height: 6, borderRadius: '50%', background: activeTournament.status === 'Live' ? 'var(--color-danger)' : '#64748b' }} className={activeTournament.status === 'Live' ? 'animate-pulse' : ''}></div> {activeTournament.status}
-                </div>
-             </div>
-             
-             {/* Beautiful Bracket Visual Setup */}
-             <div style={{ flex: 1, padding: '2rem', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', overflowX: 'auto' }}>
-                <div style={{ display: 'flex', gap: '4rem', alignItems: 'center', minWidth: 'max-content' }}>
-                   {/* Quarter Finals */}
-                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                      <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Quarter Finals</div>
-                      <div className="hover-lift" style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', width: '220px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-                         <div style={{ padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', fontWeight: activeTournament.matches.q1.s1 > activeTournament.matches.q1.s2 ? 700 : 500, color: activeTournament.matches.q1.s1 > activeTournament.matches.q1.s2 ? 'var(--color-text-main)' : '#64748b', background: activeTournament.matches.q1.s1 > activeTournament.matches.q1.s2 ? 'white' : '#f8fafc' }}><span>{activeTournament.matches.q1.t1}</span><span style={{ color: activeTournament.matches.q1.s1 > activeTournament.matches.q1.s2 ? 'var(--color-primary-dark)' : '#64748b' }}>{activeTournament.matches.q1.s1}</span></div>
-                         <div style={{ padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', fontWeight: activeTournament.matches.q1.s2 > activeTournament.matches.q1.s1 ? 700 : 500, color: activeTournament.matches.q1.s2 > activeTournament.matches.q1.s1 ? 'var(--color-text-main)' : '#64748b', background: activeTournament.matches.q1.s2 > activeTournament.matches.q1.s1 ? 'white' : '#f8fafc' }}><span>{activeTournament.matches.q1.t2}</span><span style={{ color: activeTournament.matches.q1.s2 > activeTournament.matches.q1.s1 ? 'var(--color-primary-dark)' : '#64748b' }}>{activeTournament.matches.q1.s2}</span></div>
-                      </div>
-                      <div className="hover-lift" style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', width: '220px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-                         <div style={{ padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', fontWeight: activeTournament.matches.q2.s1 > activeTournament.matches.q2.s2 ? 700 : 500, color: activeTournament.matches.q2.s1 > activeTournament.matches.q2.s2 ? 'var(--color-text-main)' : '#64748b', background: activeTournament.matches.q2.s1 > activeTournament.matches.q2.s2 ? 'white' : '#f8fafc' }}><span>{activeTournament.matches.q2.t1}</span><span style={{ color: activeTournament.matches.q2.s1 > activeTournament.matches.q2.s2 ? 'var(--color-primary-dark)' : '#64748b' }}>{activeTournament.matches.q2.s1}</span></div>
-                         <div style={{ padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', fontWeight: activeTournament.matches.q2.s2 > activeTournament.matches.q2.s1 ? 700 : 500, color: activeTournament.matches.q2.s2 > activeTournament.matches.q2.s1 ? 'var(--color-text-main)' : '#64748b', background: activeTournament.matches.q2.s2 > activeTournament.matches.q2.s1 ? 'white' : '#f8fafc' }}><span>{activeTournament.matches.q2.t2}</span><span style={{ color: activeTournament.matches.q2.s2 > activeTournament.matches.q2.s1 ? 'var(--color-primary-dark)' : '#64748b' }}>{activeTournament.matches.q2.s2}</span></div>
-                      </div>
+               <div style={{ flex: '1 1 0', minWidth: '360px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                 <div style={{ background: 'white', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 20px 50px -30px rgba(15, 23, 42, 0.15)' }}>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                       <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>{activeTournament.name}</h3>
+                       <button onClick={handleEditClick} className="btnOutline scale-btn" style={{ padding: '0.5rem 0.9rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                         <Edit size={14} /> Edit Settings
+                       </button>
+                     </div>
+                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', background: activeTournament.status === 'Live' ? '#fef2f2' : '#f8fafc', color: activeTournament.status === 'Live' ? 'var(--color-danger)' : '#64748b', border: activeTournament.status === 'Live' ? '1px solid #fca5a5' : '1px solid #cbd5e1', padding: '0.35rem 0.9rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 700 }}>
+                       <div style={{ width: 6, height: 6, borderRadius: '50%', background: activeTournament.status === 'Live' ? 'var(--color-danger)' : '#64748b' }} className={activeTournament.status === 'Live' ? 'animate-pulse' : ''}></div> {activeTournament.status}
+                     </div>
                    </div>
-                   
-                   {/* Semi Finals */}
-                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem', position: 'relative' }}>
-                      <div style={{ position: 'absolute', left: '-2rem', top: '25%', width: '2rem', height: '1px', background: '#cbd5e1' }}></div>
-                      <div style={{ position: 'absolute', left: '-2rem', bottom: '25%', width: '2rem', height: '1px', background: '#cbd5e1' }}></div>
-                      <div style={{ position: 'absolute', left: '-2rem', top: '25%', width: '1px', height: '50.5%', background: '#cbd5e1' }}></div>
-                      <div style={{ position: 'absolute', left: '-2rem', top: '50%', width: '2rem', height: '1px', background: '#cbd5e1' }}></div>
-                      
-                      <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Semi Finals</div>
-                      <div className="hover-lift" style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', width: '220px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
-                         <div style={{ padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', fontWeight: activeTournament.matches.s1.s1 > activeTournament.matches.s1.s2 ? 700 : 500, color: activeTournament.matches.s1.s1 > activeTournament.matches.s1.s2 ? 'var(--color-text-main)' : '#64748b', background: activeTournament.matches.s1.s1 > activeTournament.matches.s1.s2 ? 'white' : '#f8fafc' }}><span>{activeTournament.matches.s1.t1}</span><span style={{ color: activeTournament.matches.s1.s1 > activeTournament.matches.s1.s2 ? 'var(--color-primary-dark)' : '#64748b' }}>{activeTournament.matches.s1.s1}</span></div>
-                         <div style={{ padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', fontWeight: activeTournament.matches.s1.s2 > activeTournament.matches.s1.s1 ? 700 : 500, color: activeTournament.matches.s1.s2 > activeTournament.matches.s1.s1 ? 'var(--color-text-main)' : '#64748b', background: activeTournament.matches.s1.s2 > activeTournament.matches.s1.s1 ? 'white' : '#f8fafc' }}><span>{activeTournament.matches.s1.t2}</span><span style={{ color: activeTournament.matches.s1.s2 > activeTournament.matches.s1.s1 ? 'var(--color-primary-dark)' : '#64748b' }}>{activeTournament.matches.s1.s2}</span></div>
-                      </div>
-                   </div>
+                 </div>
 
-                   {/* Grand Final */}
-                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem', position: 'relative' }}>
-                      <div style={{ position: 'absolute', left: '-2rem', top: '50%', width: '2rem', height: '1px', background: '#cbd5e1' }}></div>
-                      
-                      <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Trophy size={14} /> Grand Final</div>
-                      <div className="hover-lift" style={{ background: 'white', border: '2px solid #f59e0b', borderRadius: '8px', width: '220px', overflow: 'hidden', boxShadow: '0 10px 15px -3px rgba(245,158,11,0.2)' }}>
-                         <div style={{ padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #fcf3c0', fontWeight: 800, color: 'var(--color-text-main)', background: '#fffbeb' }}><span>{activeTournament.matches.f1.t1}</span><span style={{ color: 'var(--color-primary-dark)' }}>{activeTournament.matches.f1.s1}</span></div>
-                         <div style={{ padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', fontWeight: 500, color: '#64748b', background: 'white' }}><span>{activeTournament.matches.f1.t2}</span><span>{activeTournament.matches.f1.s2}</span></div>
-                      </div>
+                 {isExternalTournament ? (
+                   <div style={{ flex: 1, minHeight: '420px', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                     <div style={{ fontSize: '0.875rem', fontWeight: 700, color: '#475569' }}>External Website Preview</div>
+                     <div style={{ position: 'relative', borderRadius: '16px', overflow: 'hidden', border: '1px solid #cbd5e1', minHeight: '320px', background: 'white' }}>
+                       {activeTournament.externalUrl ? (
+                         <>
+                           <iframe
+                             src={activeTournament.externalUrl}
+                             title={activeTournament.name}
+                             style={{ width: '100%', height: '100%', border: '0' }}
+                             loading="lazy"
+                           />
+                           <div
+                             onClick={() => activeTournament.externalUrl && window.open(activeTournament.externalUrl, '_blank')}
+                             style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.45)', color: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.05em' }}
+                           >
+                             Click preview to open website
+                           </div>
+                         </>
+                       ) : (
+                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b', fontSize: '0.95rem' }}>No external link attached.</div>
+                       )}
+                     </div>
+                     <button
+                       onClick={() => activeTournament.externalUrl && window.open(activeTournament.externalUrl, '_blank')}
+                       className="btnSolid scale-btn"
+                       style={{ padding: '0.9rem 1rem', background: 'var(--color-primary-dark)', color: 'white', alignSelf: 'flex-start' }}
+                     >
+                       Open Website
+                     </button>
                    </div>
-                </div>
+                 ) : (
+                   <div style={{ flex: 1, minHeight: '420px', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '1.5rem', overflowX: 'auto' }}>
+                     <div style={{ display: 'flex', gap: '4rem', alignItems: 'center', minWidth: 'max-content' }}>
+                       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                         <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Quarter Finals</div>
+                         <div className="hover-lift" style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', width: '220px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                           <div style={{ padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', fontWeight: activeTournament.matches.q1.s1 > activeTournament.matches.q1.s2 ? 700 : 500, color: activeTournament.matches.q1.s1 > activeTournament.matches.q1.s2 ? 'var(--color-text-main)' : '#64748b', background: activeTournament.matches.q1.s1 > activeTournament.matches.q1.s2 ? 'white' : '#f8fafc' }}><span>{activeTournament.matches.q1.t1}</span><span style={{ color: activeTournament.matches.q1.s1 > activeTournament.matches.q1.s2 ? 'var(--color-primary-dark)' : '#64748b' }}>{activeTournament.matches.q1.s1}</span></div>
+                           <div style={{ padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', fontWeight: activeTournament.matches.q1.s2 > activeTournament.matches.q1.s1 ? 700 : 500, color: activeTournament.matches.q1.s2 > activeTournament.matches.q1.s1 ? 'var(--color-text-main)' : '#64748b', background: activeTournament.matches.q1.s2 > activeTournament.matches.q1.s1 ? 'white' : '#f8fafc' }}><span>{activeTournament.matches.q1.t2}</span><span style={{ color: activeTournament.matches.q1.s2 > activeTournament.matches.q1.s1 ? 'var(--color-primary-dark)' : '#64748b' }}>{activeTournament.matches.q1.s2}</span></div>
+                         </div>
+                         <div className="hover-lift" style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', width: '220px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                           <div style={{ padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', fontWeight: activeTournament.matches.q2.s1 > activeTournament.matches.q2.s2 ? 700 : 500, color: activeTournament.matches.q2.s1 > activeTournament.matches.q2.s2 ? 'var(--color-text-main)' : '#64748b', background: activeTournament.matches.q2.s1 > activeTournament.matches.q2.s2 ? 'white' : '#f8fafc' }}><span>{activeTournament.matches.q2.t1}</span><span style={{ color: activeTournament.matches.q2.s1 > activeTournament.matches.q2.s2 ? 'var(--color-primary-dark)' : '#64748b' }}>{activeTournament.matches.q2.s1}</span></div>
+                           <div style={{ padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', fontWeight: activeTournament.matches.q2.s2 > activeTournament.matches.q2.s1 ? 700 : 500, color: activeTournament.matches.q2.s2 > activeTournament.matches.q2.s1 ? 'var(--color-text-main)' : '#64748b', background: activeTournament.matches.q2.s2 > activeTournament.matches.q2.s1 ? 'white' : '#f8fafc' }}><span>{activeTournament.matches.q2.t2}</span><span style={{ color: activeTournament.matches.q2.s2 > activeTournament.matches.q2.s1 ? 'var(--color-primary-dark)' : '#64748b' }}>{activeTournament.matches.q2.s2}</span></div>
+                         </div>
+                       </div>
+                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem', position: 'relative' }}>
+                         <div style={{ position: 'absolute', left: '-2rem', top: '25%', width: '2rem', height: '1px', background: '#cbd5e1' }}></div>
+                         <div style={{ position: 'absolute', left: '-2rem', bottom: '25%', width: '2rem', height: '1px', background: '#cbd5e1' }}></div>
+                         <div style={{ position: 'absolute', left: '-2rem', top: '25%', width: '1px', height: '50.5%', background: '#cbd5e1' }}></div>
+                         <div style={{ position: 'absolute', left: '-2rem', top: '50%', width: '2rem', height: '1px', background: '#cbd5e1' }}></div>
+                         <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Semi Finals</div>
+                         <div className="hover-lift" style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', width: '220px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
+                           <div style={{ padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', fontWeight: activeTournament.matches.s1.s1 > activeTournament.matches.s1.s2 ? 700 : 500, color: activeTournament.matches.s1.s1 > activeTournament.matches.s1.s2 ? 'var(--color-text-main)' : '#64748b', background: activeTournament.matches.s1.s1 > activeTournament.matches.s1.s2 ? 'white' : '#f8fafc' }}><span>{activeTournament.matches.s1.t1}</span><span style={{ color: activeTournament.matches.s1.s1 > activeTournament.matches.s1.s2 ? 'var(--color-primary-dark)' : '#64748b' }}>{activeTournament.matches.s1.s1}</span></div>
+                           <div style={{ padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', fontWeight: activeTournament.matches.s1.s2 > activeTournament.matches.s1.s1 ? 700 : 500, color: activeTournament.matches.s1.s2 > activeTournament.matches.s1.s1 ? 'var(--color-text-main)' : '#64748b', background: activeTournament.matches.s1.s2 > activeTournament.matches.s1.s1 ? 'white' : '#f8fafc' }}><span>{activeTournament.matches.s1.t2}</span><span style={{ color: activeTournament.matches.s1.s2 > activeTournament.matches.s1.s1 ? 'var(--color-primary-dark)' : '#64748b' }}>{activeTournament.matches.s1.s2}</span></div>
+                         </div>
+                       </div>
+                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem', position: 'relative' }}>
+                         <div style={{ position: 'absolute', left: '-2rem', top: '50%', width: '2rem', height: '1px', background: '#cbd5e1' }}></div>
+                         <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Trophy size={14} /> Grand Final</div>
+                         <div className="hover-lift" style={{ background: 'white', border: '2px solid #f59e0b', borderRadius: '8px', width: '220px', overflow: 'hidden', boxShadow: '0 10px 15px -3px rgba(245,158,11,0.2)' }}>
+                           <div style={{ padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #fcf3c0', fontWeight: 800, color: 'var(--color-text-main)', background: '#fffbeb' }}><span>{activeTournament.matches.f1.t1}</span><span style={{ color: 'var(--color-primary-dark)' }}>{activeTournament.matches.f1.s1}</span></div>
+                           <div style={{ padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', fontWeight: 500, color: '#64748b', background: 'white' }}><span>{activeTournament.matches.f1.t2}</span><span>{activeTournament.matches.f1.s2}</span></div>
+                         </div>
+                       </div>
+                     </div>
+                   </div>
+                 )}
+               </div>
              </div>
            </div>
          )}
@@ -392,9 +456,27 @@ export default function TournamentPage() {
             <form 
               onSubmit={(e) => { 
                 e.preventDefault(); 
+                const newId = tournaments.length > 0 ? Math.max(...tournaments.map(t => t.id)) + 1 : 1;
+                const newTournament = {
+                  id: newId,
+                  name: tournamentForm.name,
+                  status: 'Upcoming',
+                  format: tournamentForm.format,
+                  previewType: tournamentForm.previewType,
+                  externalUrl: tournamentForm.previewType === 'external' ? tournamentForm.externalUrl : '',
+                  participants: tournamentForm.previewType === 'external' ? [] : Array.from({ length: Number(tournamentForm.participants) }, (_, i) => `Team ${i + 1}`),
+                  matches: tournamentForm.previewType === 'external' ? {} : {
+                    q1: { t1: 'TBD', s1: '-', t2: 'TBD', s2: '-' },
+                    q2: { t1: 'TBD', s1: '-', t2: 'TBD', s2: '-' },
+                    s1: { t1: 'TBD', s1: '-', t2: 'TBD', s2: '-' },
+                    f1: { t1: 'TBD', s1: '-', t2: 'TBD', s2: '-' }
+                  }
+                };
+                setTournaments([...tournaments, newTournament]);
+                setActiveTournamentId(newId);
                 setIsModalOpen(false); 
                 alert(`Tournament "${tournamentForm.name}" created successfully!`); 
-                setTournamentForm({name: '', participants: '', format: 'bracket'});
+                setTournamentForm({name: '', participants: '', format: 'bracket', previewType: 'bracket', externalUrl: ''});
               }} 
               style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
             >
@@ -434,6 +516,31 @@ export default function TournamentPage() {
                   <option value="sequential">Sequential (Round Robin)</option>
                 </select>
               </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 700, marginBottom: '0.5rem', color: '#475569' }}>Preview Source</label>
+                <select
+                  value={tournamentForm.previewType}
+                  onChange={(e) => setTournamentForm({...tournamentForm, previewType: e.target.value})}
+                  style={{ width: '100%', padding: '0.875rem 1rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', background: 'white', fontSize: '0.95rem', cursor: 'pointer', transition: 'border-color 0.2s', boxSizing: 'border-box' }}
+                >
+                  <option value="bracket">Bracket Preview</option>
+                  <option value="external">External Website</option>
+                </select>
+              </div>
+              {tournamentForm.previewType === 'external' && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 700, marginBottom: '0.5rem', color: '#475569' }}>External Website URL</label>
+                  <input
+                    type="url"
+                    value={tournamentForm.externalUrl}
+                    onChange={(e) => setTournamentForm({...tournamentForm, externalUrl: e.target.value})}
+                    required
+                    placeholder="https://example.com"
+                    style={{ width: '100%', padding: '0.875rem 1rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '0.95rem', transition: 'border-color 0.2s', boxSizing: 'border-box' }}
+                  />
+                </div>
+              )}
 
               <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
                 <button 

@@ -44,7 +44,7 @@ export default function GuestTournamentPage() {
             </div>
           )}
 
-          {activeTournament?.status === 'Live' && (
+          {activeTournament?.status === 'Live' && activeTournament.previewType !== 'external' && activeTournament.matches?.q1 && (
             <div style={{ marginBottom: '1.5rem' }}>
               <h2 style={{ fontSize: '0.875rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>Current Top Match</h2>
               <div className="hover-lift" style={{ background: 'white', border: '2px solid var(--color-danger)', borderRadius: '16px', padding: '1.5rem', textAlign: 'center', position: 'relative', boxShadow: 'var(--shadow-md)' }}>
@@ -91,7 +91,33 @@ export default function GuestTournamentPage() {
           </div>
 
           {activeTab === 'bracket' && activeTournament && (
-            <div style={{ background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.25rem', overflowX: 'auto' }}>
+            activeTournament.previewType === 'external' ? (
+              <div style={{ background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', minHeight: '300px' }}>
+                <div style={{ fontSize: '0.875rem', fontWeight: 700, color: '#475569' }}>External Tournament Preview</div>
+                <div style={{ flex: 1, borderRadius: '18px', overflow: 'hidden', border: '1px solid #cbd5e1', background: 'white', minHeight: '260px' }}>
+                  {activeTournament.externalUrl ? (
+                    <iframe
+                      src={activeTournament.externalUrl}
+                      title={activeTournament.name}
+                      style={{ width: '100%', height: '100%', border: '0' }}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '0.95rem' }}>No external preview URL set.</div>
+                  )}
+                </div>
+                {activeTournament.externalUrl && (
+                  <button
+                    onClick={() => window.open(activeTournament.externalUrl, '_blank')}
+                    className="btnSolid scale-btn"
+                    style={{ alignSelf: 'flex-start', padding: '0.9rem 1rem', background: 'var(--color-primary-dark)', color: 'white' }}
+                  >
+                    Open Tournament Website
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div style={{ background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.25rem', overflowX: 'auto' }}>
                  <div style={{ display: 'flex', gap: '2rem', alignItems: 'center', minWidth: 'max-content' }}>
                     
                     {/* Quarter Finals */}
@@ -132,6 +158,7 @@ export default function GuestTournamentPage() {
                     </div>
                  </div>
             </div>
+            )
           )}
 
           {activeTab === 'standings' && (

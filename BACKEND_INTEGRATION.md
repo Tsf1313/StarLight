@@ -1,77 +1,144 @@
 # EventFlow Backend Integration Guide
 
-This document outlines the frontend architecture and provides a comprehensive guide for backend developers to safely replace the frontend mock-data layer with real API endpoints.
+This document outlines the frontend architecture and provides a smooth integration path for backend developers to replace the frontend mock-data layer with real API endpoints.
 
 ## Architecture Overview
 
-The EventFlow front-end uses React (via Vite) and is cleanly separated into three main areas:
-1. **Landing/Auth (`src/pages/landing`, `src/pages/auth`)**: Public facing pages.
-2. **Host Dashboard (`src/pages/host`)**: Desktop-first administration panels.
-3. **Guest App (`src/pages/guest`)**: Mobile-first progressive experience for event attendees.
+The EventFlow front-end uses React (via Vite) with clean separation between:
+1. **Landing/Auth (`src/pages/landing`, `src/pages/auth`)**: Public pages and auth flows.
+2. **Host Dashboard (`src/pages/host`)**: Desktop-first admin panels.
+3. **Guest App (`src/pages/guest`)**: Mobile-first attendee experience.
 
-To streamline frontend design and UX work, a centralized "mock database" pattern was used. This prevents prop-drilling errors and acts perfectly as a 1:1 blueprint for your future RESTful API endpoints or GraphQL schemas.
+The current implementation uses a centralized mock-data module at `src/data/mockData.js`. That file is intentionally a blueprint for backend API contracts and database models.
 
-## The Mock Data Layer (`src/data/mockData.js`)
+## What Backend Developers Should Do
 
-All pages across the entire application fetch their initial state from `src/data/mockData.js`. 
+### 1. Keep UI components intact
+No React page files need a full rewrite. The front-end already expects data in a format that maps directly to API responses.
 
-**To convert this project to use a live backend:**
-1. You do not need to rewrite the UI components.
-2. Create frontend API services (e.g., using `axios` or `fetch` in a `src/services/api.js` file).
-3. Inside the `useEffect` hooks of the various pages, replace the static imports from `mockData.js` with your API calls, and update the React `useState` hooks using the response payload.
+### 2. Add a frontend API service
+Create `src/services/api.js` or `src/services/apiClient.js` and expose functions such as:
+- `getEvents()`
+- `getAttendees()`
+- `getTournaments()`
+- `getBrochureFiles()`
+- `getVenueMaps()`
+- `getFeedbackFormConfig()`
+- `saveFeedbackFormConfig(config)`
+- `login(credentials)`
+- `register(data)`
 
-### Required Database Models / Schemas
+Use `fetch` or `axios` to call backend endpoints and return JSON payloads.
 
-Based on the structure of `mockData.js`, the backend will need to support the following minimal entity schemas:
+### 3. Replace mock-data imports with API calls
+In the pages that currently use `mockData.js`, change the page lifecycle to use `useEffect` and `useState`:
+- call the API service on mount
+- set state with the response
+- preserve the same data shapes as the existing mock object
 
-#### 1. "Event" Entity
-- `id` (String/UUID)
-- `title` (String)
-- `dateRange` (String or Date range)
-- `location` (String)
-- `status` (Enum: 'Active', 'Upcoming', 'Completed')
+This means the UI will behave correctly without additional structural changes.
 
-#### 2. "Attendee" Entity
-- `id` (String/UUID)
-- `name` (String)
-- `email` (String)
-- `status` (Enum: 'Checked In', 'Absent')
-- `time` (String/Timestamp)
-- `type` (Enum: 'VIP Pass', 'Standard')
-- `source` (String)
+## Suggested API Contracts
 
-#### 3. "Tournament" Entity
-- `id` (Number/UUID)
-- `name` (String)
-- `status` (Enum: 'Live', 'Upcoming', 'Completed')
-- `format` (String, e.g., 'bracket')
-- `participants` (Array of Strings/IDs)
-- `matches` (Object grouping rounds, e.g., `q1`, `s1`, `f1` containing teams and scores)
+### Authentication
+- `POST /api/auth/login`
+- `POST /api/auth/register`
 
-#### 4. "BrochureFile" Entity
-- `id` (Number/UUID)
-- `name` (String)
-- `size` (Number - bytes)
-- `type` (String - MimeType)
-- `url` (String - Bucket or CDN URL)
-- `info` (String - description)
+Payloads should return a user object and session token (or set cookie).
 
-#### 5. "VenueMap" & "Zone" Entities
-- `id` (Number/UUID)
-- `name` (String, e.g., "Main Floor")
-- `image` (String - URL to floorplan image)
-- `zones` (Array of Objects):
-  - `id` (Number/UUID)
-  - `name` (String)
-  - `color` (String - Hex)
-  - `x` (Number - percentage)
-  - `y` (Number - percentage)
+### Host Dashboard
+- `GET /api/dashboard/events`
+- `GET /api/dashboard/attendance`
+- `GET /api/dashboard/tournaments`
+- `GET /api/dashboard/brochure`
+- `GET /api/dashboard/venue-maps`
+- `GET /api/dashboard/feedback-form`
+- `POST /api/dashboard/feedback-form`
+- `GET /api/dashboard/customize`
 
-#### 6. "Announcement" & "Schedule"
-Both the Guest layout and Host layout read and write to announcements and event schedules. The backend must provide CRUD operations mapping them to individual `Events`.
+### Guest App
+- `GET /api/guest/home`
+- `GET /api/guest/brochure`
+- `GET /api/guest/map`
+- `GET /api/guest/tournament`
+- `GET /api/guest/feedback`
 
-## Checklist for Backend Developers
-- [ ] Connect Authentication (replace placeholder auth in `LoginPage.jsx` and `RegisterPage.jsx`).
-- [ ] Implement robust file uploads (replace the simulated `setTimeout` file upload in `BrochurePage.jsx` with real `FormData` POST requests to your server/S3 bucket).
-- [ ] Provide WebSocket or Polling endpoints if you wish to keep the `GuestTournamentPage.jsx` "Live Match" score tracking fully real-time.
-- [ ] Finally, you can safely delete `src/data/mockData.js` once all UI components derive their `useState` hooks natively via API context.
+## Data Model Summary
+
+### Event
+- `id` (string, UUID)
+- `title` (string)
+- `dateRange` (string)
+- `location` (string)
+- `status` (string)
+
+### Attendee
+- `id` (string)
+- `name` (string)
+- `email` (string)
+- `status` (string)
+- `time` (string)
+- `type` (string)
+- `source` (string)
+
+### Tournament
+- `id` (string)
+- `name` (string)
+- `status` (string)
+- `format` (string)
+- `participants` (array of strings)
+- `matches` (object)
+
+### Brochure File
+- `id` (string)
+- `name` (string)
+- `size` (number)
+- `type` (string)
+- `url` (string)
+- `info` (string)
+
+### Venue Map
+- `id` (string)
+- `name` (string)
+- `image` (string)
+- `zones` (array)
+  - `id` (string)
+  - `name` (string)
+  - `color` (string)
+  - `x` (number)
+  - `y` (number)
+
+### Feedback Form Configuration
+- `heading` (string)
+- `description` (string)
+- `link` (string)
+- `buttonText` (string)
+- `note` (string)
+
+## Practical Backend Integration Steps
+
+1. Start by wiring the auth endpoints used by `LoginPage.jsx` and `RegisterPage.jsx`.
+2. Replace `mockData` page imports in host/guest pages with API calls.
+3. Use a single shared `apiClient` for headers, auth tokens, and response parsing.
+4. Keep the original mock shapes while backend integration is in progress.
+5. When APIs are stable, remove `src/data/mockData.js` and any direct static imports.
+
+## Backend Developer Checklist
+- [ ] Implement auth endpoints and session handling.
+- [ ] Create endpoints for event and attendee data.
+- [ ] Create endpoints for tournament data and live status.
+- [ ] Add brochure file CRUD and file upload support.
+- [ ] Add venue map data and zone metadata.
+- [ ] Add a feedback form configuration endpoint.
+- [ ] Use localStorage or persistent storage for saved host form settings.
+- [ ] Keep payloads consistent with the existing mock data shapes.
+- [ ] Test pages by swapping one API call at a time.
+
+## Notes for a Smooth Handoff
+
+- The front-end is intentionally decoupled from any backend implementation.
+- Backend should return clean JSON that matches the current mock data structure.
+- Frontend components expect arrays and objects, not nested wrappers.
+- Use the existing `mockData.js` file as the canonical payload reference during integration.
+
+Once these backend endpoints are live, the front-end will switch to real data with minimal UI changes.

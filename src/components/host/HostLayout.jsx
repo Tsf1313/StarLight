@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Trophy, BookOpen, Map as MapIcon, Paintbrush, Share2, LogOut, Bell, Search, Hexagon, CheckCircle2 } from 'lucide-react';
+import { Outlet, NavLink, Link } from 'react-router-dom';
+import { LayoutDashboard, Users, Trophy, BookOpen, Map as MapIcon, Paintbrush, MessageCircle, Share2, LogOut, Bell, Search, Hexagon, CheckCircle2 } from 'lucide-react';
 import styles from '../../styles/Host.module.css';
 
 const sidebarLinks = [
@@ -9,11 +9,11 @@ const sidebarLinks = [
   { path: '/dashboard/tournament', label: 'Tournament', icon: Trophy },
   { path: '/dashboard/brochure', label: 'Brochure', icon: BookOpen },
   { path: '/dashboard/venue-map', label: 'Venue Map', icon: MapIcon },
+  { path: '/dashboard/feedback', label: 'Feedback', icon: MessageCircle },
   { path: '/dashboard/customize', label: 'Customize', icon: Paintbrush },
 ];
 
 export default function HostLayout() {
-  const location = useLocation();
   const [downloadingQR, setDownloadingQR] = useState(false);
   const [downloadedQR, setDownloadedQR] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -51,13 +51,12 @@ export default function HostLayout() {
         <nav style={{ flex: 1, padding: '1.5rem 0', overflowY: 'auto' }}>
           {sidebarLinks.map((link) => {
             const Icon = link.icon;
-            const isActive = location.pathname === link.path;
             return (
-              <Link 
+              <NavLink 
                 key={link.path} 
                 to={link.path}
                 className="hover-lift scale-btn"
-                style={{
+                style={({ isActive }) => ({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '1rem',
@@ -67,11 +66,11 @@ export default function HostLayout() {
                   borderRight: isActive ? '3px solid white' : 'none',
                   textDecoration: 'none',
                   margin: '0.25rem 0'
-                }}
+                })}
               >
                 <Icon size={20} />
-                <span style={{ fontWeight: isActive ? 600 : 500 }}>{link.label}</span>
-              </Link>
+                <span style={{ fontWeight: 500 }}>{link.label}</span>
+              </NavLink>
             );
           })}
         </nav>

@@ -35,6 +35,68 @@ export const initialTournaments = [
       s1: { t1: 'TBD', s1: '-', t2: 'TBD', s2: '-' },
       f1: { t1: 'TBD', s1: '-', t2: 'TBD', s2: '-' }
     }
+  },
+  {
+    id: 3,
+    name: 'Regional Qualifier',
+    status: 'Upcoming',
+    format: 'bracket',
+    participants: ['Falcons', 'Vipers', 'Rhinos', 'Sharks'],
+    matches: {
+      q1: { t1: 'Falcons', s1: '-', t2: 'Vipers', s2: '-' },
+      q2: { t1: 'Rhinos', s1: '-', t2: 'Sharks', s2: '-' },
+      s1: { t1: 'TBD', s1: '-', t2: 'TBD', s2: '-' },
+      f1: { t1: 'TBD', s1: '-', t2: 'TBD', s2: '-' }
+    }
+  },
+  {
+    id: 4,
+    name: 'Champions League',
+    status: 'Live',
+    format: 'bracket',
+    participants: ['Storm', 'Phantoms', 'Knights', 'Raiders'],
+    matches: {
+      q1: { t1: 'Storm', s1: 3, t2: 'Phantoms', s2: 2 },
+      q2: { t1: 'Knights', s1: 1, t2: 'Raiders', s2: 4 },
+      s1: { t1: 'Storm', s1: 2, t2: 'Raiders', s2: 2 },
+      f1: { t1: 'TBD', s1: '-', t2: 'TBD', s2: '-' }
+    }
+  },
+  {
+    id: 5,
+    name: 'Spring Invitational',
+    status: 'Upcoming',
+    format: 'bracket',
+    participants: ['Comets', 'Titans', 'Raptors', 'Mavericks'],
+    matches: {
+      q1: { t1: 'Comets', s1: '-', t2: 'Titans', s2: '-' },
+      q2: { t1: 'Raptors', s1: '-', t2: 'Mavericks', s2: '-' },
+      s1: { t1: 'TBD', s1: '-', t2: 'TBD', s2: '-' },
+      f1: { t1: 'TBD', s1: '-', t2: 'TBD', s2: '-' }
+    }
+  },
+  {
+    id: 6,
+    name: 'Winter Clash',
+    status: 'In-Active',
+    format: 'bracket',
+    participants: ['Gladiators', 'Rangers', 'Spartans', 'Berserkers'],
+    matches: {
+      q1: { t1: 'Gladiators', s1: '-', t2: 'Rangers', s2: '-' },
+      q2: { t1: 'Spartans', s1: '-', t2: 'Berserkers', s2: '-' },
+      s1: { t1: 'TBD', s1: '-', t2: 'TBD', s2: '-' },
+      f1: { t1: 'TBD', s1: '-', t2: 'TBD', s2: '-' }
+    }
+  },
+  {
+    id: 7,
+    name: 'Web Showcase',
+    status: 'Upcoming',
+    format: 'bracket',
+    previewType: 'external',
+    externalUrl: 'https://www.example.com',
+    participants: [],
+    matches: {}
   }
 ];
 
@@ -76,8 +138,74 @@ export const initialMaps = [
       { id: 3, name: 'Exhibition Hall A', color: '#10b981', x: 65, y: 40 }
     ],
     activeZoneId: null
+  },
+  {
+    id: 2,
+    name: 'Upper Deck',
+    image: 'https://images.unsplash.com/photo-1524499982521-1ffd58dd89ea?auto=format&fit=crop&q=80&w=1000',
+    zones: [
+      { id: 4, name: 'VIP Lounge', color: '#8b5cf6', x: 30, y: 25 },
+      { id: 5, name: 'Workshop Area', color: '#f97316', x: 55, y: 55 },
+      { id: 6, name: 'Networking Hub', color: '#22c55e', x: 75, y: 35 }
+    ],
+    activeZoneId: null
+  },
+  {
+    id: 3,
+    name: 'Outdoor Annex',
+    image: 'https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&q=80&w=1000',
+    zones: [
+      { id: 7, name: 'Registration Tent', color: '#0284c7', x: 40, y: 30 },
+      { id: 8, name: 'Food Trucks', color: '#f59e0b', x: 65, y: 65 },
+      { id: 9, name: 'Photo Booth', color: '#ec4899', x: 25, y: 70 }
+    ],
+    activeZoneId: null
   }
 ];
+
+export const initialFeedback = [
+  {
+    id: 1,
+    name: 'Amelia Parker',
+    role: 'Attendee',
+    link: '/guest/feedback',
+    description: 'Loved the event layout, but the map could be more intuitive for first-time visitors.'
+  },
+  {
+    id: 2,
+    name: 'Jordan Lee',
+    role: 'Volunteer',
+    link: '/guest/feedback',
+    description: 'The registration process was smooth, however the workshop descriptions need more detail.'
+  },
+  {
+    id: 3,
+    name: 'Sofia Martinez',
+    role: 'Speaker',
+    link: '/guest/feedback',
+    description: 'Great experience overall. Please add a direct link to session agendas from the dashboard.'
+  }
+];
+
+export const defaultFeedbackFormConfig = {
+  heading: 'How was your experience?',
+  description: 'Your feedback shapes the future of our events. Take a brief moment to share your thoughts with us.',
+  link: 'https://forms.google.com',
+  buttonText: 'Open Feedback Form',
+  note: 'Redirects to a secure Google Form.'
+};
+
+export const getFeedbackFormConfig = () => {
+  if (typeof window === 'undefined') return defaultFeedbackFormConfig;
+  const saved = window.localStorage.getItem('eventflowFeedbackFormConfig');
+  return saved ? JSON.parse(saved) : defaultFeedbackFormConfig;
+};
+
+export const saveFeedbackFormConfig = (config) => {
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem('eventflowFeedbackFormConfig', JSON.stringify(config));
+  }
+};
 
 export const hostEvents = [
   {
