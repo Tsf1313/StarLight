@@ -1,6 +1,14 @@
 import express from 'express';
 import sqlite3Pkg from 'sqlite3';
 import cors from 'cors';
+import multer from 'multer'; // NEW
+import path from 'path'; // NEW
+import fs from 'fs'; // NEW
+import { fileURLToPath } from 'url'; // NEW
+
+// Setup for ES Modules directory path
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Initialize sqlite3 for ES Modules
 const sqlite3 = sqlite3Pkg.verbose();
@@ -9,6 +17,40 @@ const port = 3000;
 
 app.use(cors());
 app.use(express.json());
+// Silence browser favicon requests
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
+// ==========================================
+// FILE UPLOAD CONFIGURATION (Multer)
+// ==========================================
+// Ensure 'uploads' directory exists
+if (!fs.existsSync(path.join(__dirname, 'uploads'))) {
+    fs.mkdirSync(path.join(__dirname, 'uploads'));
+}
+
+// Allow frontend to view images in the uploads folder
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Configure how Multer saves files
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, path.join(__dirname, 'uploads'));
+    },
+    filename: (req, file, cb) => {
+        // Renames file to prevent overwriting (e.g., image_168492019.png)
+        cb(null, 'image_' + Date.now() + path.extname(file.originalname)); 
+    }
+});
+const upload = multer({ storage });
+
+// The File Upload Endpoint
+app.post('/api/upload', upload.single('file'), (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    
+    // Send back the URL where the image can be viewed
+    const imageUrl = `http://localhost:3000/uploads/${req.file.filename}`;
+    res.json({ url: imageUrl });
+});
 
 // Connect to the SQLite Database
 const db = new sqlite3.Database('./eventflow.db', (err) => {
@@ -30,12 +72,40 @@ const parseJsonFields = (row, fields) => {
 // ==========================================
 // 1. AUTHENTICATION (Host Dashboard)
 // ==========================================
+
+// --- Authentication: Login ---
 app.post('/api/auth/login', (req, res) => {
     const { email, password } = req.body;
     db.get("SELECT id, name, email FROM users WHERE email = ? AND password = ?", [email, password], (err, user) => {
         if (err) return res.status(500).json({ error: err.message });
         if (!user) return res.status(401).json({ message: "Invalid email or password" });
         res.json({ message: "Login successful", user });
+    });
+});
+
+// --- Authentication: Sign Up (Register) ---
+app.post('/api/auth/register', (req, res) => {
+    const { name, email, password } = req.body;
+    
+    // Generate a simple unique ID
+    const id = 'u_' + Date.now(); 
+    
+    const sql = "INSERT INTO users (id, name, email, password) VALUES (?, ?, ?, ?)";
+    
+    db.run(sql, [id, name, email, password], function(err) {
+        if (err) {
+            // Error code 19 usually means the email already exists (UNIQUE constraint)
+            if (err.message.includes('UNIQUE')) {
+                return res.status(400).json({ message: "Email is already registered" });
+            }
+            return res.status(500).json({ error: err.message });
+        }
+        
+        // Return the new user object (excluding password)
+        res.json({ 
+            message: "Registration successful", 
+            user: { id, name, email } 
+        });
     });
 });
 
@@ -49,10 +119,25 @@ app.get('/api/events', (req, res) => {
     });
 });
 
+// Updated: Now fetches logo and background
 app.get('/api/dashboard/customize', (req, res) => {
-    db.get("SELECT primary_color, theme_name FROM event_settings LIMIT 1", [], (err, row) => {
+    db.get("SELECT primary_color, theme_name, logo_url, background_url FROM event_settings LIMIT 1", [], (err, row) => {
         if (err) res.status(500).json({ error: err.message });
-        else res.json(row);
+        else res.json(row || {});
+    });
+});
+
+// New: Update Settings
+app.put('/api/dashboard/customize', (req, res) => {
+    const { primary_color, theme_name, logo_url, background_url } = req.body;
+    
+    const sql = `UPDATE event_settings 
+                 SET primary_color = ?, theme_name = ?, logo_url = ?, background_url = ? 
+                 WHERE id = 'set_001'`; // Updating our default settings row
+                 
+    db.run(sql, [primary_color, theme_name, logo_url, background_url], function(err) {
+        if (err) res.status(500).json({ error: err.message });
+        else res.json({ success: true, updated: this.changes });
     });
 });
 

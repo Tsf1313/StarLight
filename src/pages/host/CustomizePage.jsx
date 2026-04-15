@@ -1,10 +1,22 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Palette, Image as ImageIcon, CheckCircle2, Upload, Trash2, Smartphone } from 'lucide-react';
+import { api } from '../../services/api'; // Make sure this path is correct for your structure
 
 export default function CustomizePage() {
   const [primaryColor, setPrimaryColor] = useState('#1e40af');
+  
+  // States for live previews (Base64 strings or DB URLs)
   const [logoPreview, setLogoPreview] = useState(null);
   const [bgPreview, setBgPreview] = useState(null);
+  
+  // States to hold the actual physical files for Multer
+  const [logoFile, setLogoFile] = useState(null);
+  const [bgFile, setBgFile] = useState(null);
+  
+  // States to remember what is currently saved in the database
+  const [existingLogoUrl, setExistingLogoUrl] = useState(null);
+  const [existingBgUrl, setExistingBgUrl] = useState(null);
+
   const [isPublishing, setIsPublishing] = useState(false);
   const [published, setPublished] = useState(false);
   
@@ -18,28 +30,94 @@ export default function CustomizePage() {
     { name: 'Dark (Slate)', hex: '#0f172a' }
   ];
 
-  const handlePublish = () => {
-    setIsPublishing(true);
-    // Simulate API call to save theme
-    setTimeout(() => {
-      setIsPublishing(false);
-      setPublished(true);
-      setTimeout(() => setPublished(false), 3000);
-    }, 1500);
-  };
+  // 1. Fetch saved settings when the page loads
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const data = await api.getCustomization();
+        if (data) {
+          if (data.primary_color) setPrimaryColor(data.primary_color);
+          if (data.logo_url) {
+            setLogoPreview(data.logo_url);
+            setExistingLogoUrl(data.logo_url);
+          }
+          if (data.background_url) {
+            setBgPreview(data.background_url);
+            setExistingBgUrl(data.background_url);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load settings:", err);
+      }
+    };
+    loadSettings();
+  }, []);
 
-  const currentThemeHex = primaryColor;
-
-  const handleFileChange = (e, setPreview) => {
+  // 2. Handle File Selection (Save both the Preview and the physical File)
+  const handleFileChange = (e, setPreview, setFile) => {
     const file = e.target.files[0];
     if (file) {
+      setFile(file); // Save physical file for Multer
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPreview(reader.result);
+        setPreview(reader.result); // Save Base64 for instant UI preview
       };
       reader.readAsDataURL(file);
     }
   };
+
+  const handleRemoveLogo = () => {
+    setLogoPreview(null);
+    setLogoFile(null);
+  };
+
+  const handleRemoveBg = () => {
+    setBgPreview(null);
+    setBgFile(null);
+  };
+
+  // 3. The Publish Sequence
+  const handlePublish = async () => {
+    setIsPublishing(true);
+    
+    try {
+      let finalLogoUrl = logoPreview ? existingLogoUrl : null;
+      let finalBgUrl = bgPreview ? existingBgUrl : null;
+
+      // If a new Logo was selected, upload it first
+      if (logoFile) {
+         const logoRes = await api.uploadImage(logoFile);
+         finalLogoUrl = logoRes.url;
+         setExistingLogoUrl(finalLogoUrl);
+         setLogoFile(null); // Clear pending file
+      }
+
+      // If a new Background was selected, upload it first
+      if (bgFile) {
+         const bgRes = await api.uploadImage(bgFile);
+         finalBgUrl = bgRes.url;
+         setExistingBgUrl(finalBgUrl);
+         setBgFile(null); // Clear pending file
+      }
+
+      // Save everything to SQLite
+      await api.updateCustomization({
+        primary_color: primaryColor,
+        theme_name: 'light',
+        logo_url: finalLogoUrl,
+        background_url: finalBgUrl
+      });
+
+      setPublished(true);
+      setTimeout(() => setPublished(false), 3000);
+    } catch (err) {
+      alert('Failed to publish theme: ' + err.message);
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  const currentThemeHex = primaryColor;
 
   return (
     <div className="animate-fade-in" style={{ maxWidth: '1400px', margin: '0 auto', height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
@@ -167,7 +245,7 @@ export default function CustomizePage() {
                     <label style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between', color: '#334155' }}>
                       Event Logo
                       {logoPreview && (
-                        <button onClick={() => setLogoPreview(null)} className="hover-lift" style={{ color: '#ef4444', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+                        <button onClick={handleRemoveLogo} className="hover-lift" style={{ color: '#ef4444', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
                           <Trash2 size={14} /> Remove
                         </button>
                       )}
@@ -177,7 +255,7 @@ export default function CustomizePage() {
                       accept="image/*" 
                       ref={logoInputRef} 
                       style={{ display: 'none' }} 
-                      onChange={(e) => handleFileChange(e, setLogoPreview)}
+                      onChange={(e) => handleFileChange(e, setLogoPreview, setLogoFile)}
                     />
                     
                     {!logoPreview ? (
@@ -204,7 +282,7 @@ export default function CustomizePage() {
                     <label style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between', color: '#334155' }}>
                       Background Image (Optional)
                       {bgPreview && (
-                        <button onClick={() => setBgPreview(null)} className="hover-lift" style={{ color: '#ef4444', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+                        <button onClick={handleRemoveBg} className="hover-lift" style={{ color: '#ef4444', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
                           <Trash2 size={14} /> Remove
                         </button>
                       )}
@@ -214,7 +292,7 @@ export default function CustomizePage() {
                       accept="image/*" 
                       ref={bgInputRef} 
                       style={{ display: 'none' }} 
-                      onChange={(e) => handleFileChange(e, setBgPreview)}
+                      onChange={(e) => handleFileChange(e, setBgPreview, setBgFile)}
                     />
                     
                     {!bgPreview ? (

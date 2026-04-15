@@ -1,13 +1,33 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext'; // Check this path matches your folder structure
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { login } = useAuth(); // Pull the login function from our new memory layer
+  
+  // State for our form inputs and UI feedback
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Quick mock login redirects to dashboard
-    navigate('/dashboard');
+    setError('');
+    setIsSubmitting(true);
+
+    // Call the database bridge via our context
+    const result = await login(email, password);
+
+    if (result.success) {
+      // Success! Send them to the dashboard
+      navigate('/dashboard');
+    } else {
+      // Fail! Show the error message from the backend
+      setError(result.error || 'Failed to login. Please check your credentials.');
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -19,17 +39,51 @@ export default function LoginPage() {
           <p style={{ color: '#64748b', fontSize: '0.875rem' }}>Login to manage your events</p>
         </div>
 
+        {/* Dynamic Error Message Box */}
+        {error && (
+          <div style={{ background: '#fef2f2', color: '#dc2626', padding: '0.75rem', borderRadius: '6px', fontSize: '0.875rem', marginBottom: '1.5rem', border: '1px solid #fecaca', textAlign: 'center' }}>
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Email Address</label>
-            <input type="email" required style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid #cbd5e1', outline: 'none' }} placeholder="you@example.com" />
+            <input 
+              type="email" 
+              required 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid #cbd5e1', outline: 'none' }} 
+              placeholder="you@example.com" 
+            />
           </div>
           <div>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Password</label>
-            <input type="password" required style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid #cbd5e1', outline: 'none' }} placeholder="••••••••" />
+            <input 
+              type="password" 
+              required 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid #cbd5e1', outline: 'none' }} 
+              placeholder="••••••••" 
+            />
           </div>
-          <button type="submit" className="scale-btn" style={{ background: '#1e3a8a', color: 'white', padding: '0.75rem', borderRadius: '6px', fontWeight: 600, marginTop: '1rem' }}>
-            Sign In
+          <button 
+            type="submit" 
+            disabled={isSubmitting}
+            className="scale-btn" 
+            style={{ 
+              background: isSubmitting ? '#94a3b8' : '#1e3a8a', 
+              color: 'white', 
+              padding: '0.75rem', 
+              borderRadius: '6px', 
+              fontWeight: 600, 
+              marginTop: '1rem',
+              cursor: isSubmitting ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {isSubmitting ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 

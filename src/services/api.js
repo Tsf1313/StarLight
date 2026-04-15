@@ -26,12 +26,45 @@ export const api = {
     });
   },
 
+  register: (name, email, password) => {
+    return fetchWithHandler(`${API_BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password }),
+    });
+  },
+
   // ==========================================
   // 2. EVENTS & DASHBOARD SETTINGS
   // ==========================================
   getEvents: () => fetchWithHandler(`${API_BASE_URL}/events`),
   
   getCustomization: () => fetchWithHandler(`${API_BASE_URL}/dashboard/customize`),
+
+  updateCustomization: (customizationData) => {
+    return fetchWithHandler(`${API_BASE_URL}/dashboard/customize`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(customizationData),
+    });
+  },
+
+  // NEW: Added the uploadImage function for Multer
+  uploadImage: async (imageFile) => {
+    const formData = new FormData();
+    formData.append('file', imageFile);
+
+    const response = await fetch(`${API_BASE_URL}/upload`, {
+      method: 'POST',
+      body: formData, // The browser automatically sets the correct Multipart headers for files
+    });
+    
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error || 'Image upload failed');
+    }
+    return response.json(); 
+  },
   
   getFeedbackFormConfig: () => fetchWithHandler(`${API_BASE_URL}/dashboard/feedback-form`),
 
