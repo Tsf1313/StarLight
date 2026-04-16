@@ -1,20 +1,33 @@
 import React, { useState } from 'react';
+import { useOutletContext } from 'react-router-dom'; // NEW: Hook to catch the theme
 import { Map, MapPin } from 'lucide-react';
 import { initialMaps } from '../../data/mockData';
 
 export default function GuestVenueMapPage() {
   const [activeMapId, setActiveMapId] = useState(initialMaps.length > 0 ? initialMaps[0].id : null);
   
+  // Catch the custom theme passed down from GuestLayout
+  const { theme } = useOutletContext();
+
   const activeMap = initialMaps.find(m => m.id === activeMapId);
 
   return (
-    <div className="animate-fade-in" style={{ padding: '1.25rem', paddingBottom: '2rem' }}>
+    <div 
+      className="animate-fade-in" 
+      style={{ 
+        padding: '1.25rem', 
+        paddingBottom: '2rem',
+        minHeight: '100%',
+        background: '#f8fafc' /* Clean, solid light-gray background */
+      }}
+    >
       <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <div style={{ padding: '0.75rem', background: 'var(--color-primary)', borderRadius: '12px', color: 'white' }}>
+        {/* Dynamic primary color for the header icon */}
+        <div style={{ padding: '0.75rem', background: theme?.primary_color || 'var(--color-primary)', borderRadius: '12px', color: 'white' }}>
           <Map size={24} />
         </div>
         <div>
-          <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-text-main)' }}>Venue Map</h1>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a' }}>Venue Map</h1>
           <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Interactive Floorplans</p>
         </div>
       </div>
@@ -46,11 +59,13 @@ export default function GuestVenueMapPage() {
                         textAlign: 'left',
                         borderRadius: '18px',
                         overflow: 'hidden',
-                        border: isSelected ? '2px solid var(--color-primary)' : '1px solid #e2e8f0',
-                        background: isSelected ? '#eff6ff' : 'white',
+                        // Dynamic primary color for selected border
+                        border: isSelected ? `2px solid ${theme?.primary_color || 'var(--color-primary)'}` : '1px solid #e2e8f0',
+                        // Dynamic faint background for selected card
+                        background: isSelected ? `${theme?.primary_color || '#3b82f6'}15` : 'white',
                         cursor: 'pointer',
                         minHeight: '148px',
-                        boxShadow: isSelected ? '0 12px 24px rgba(59,130,246,0.08)' : '0 6px 16px rgba(15,23,42,0.04)',
+                        boxShadow: isSelected ? `0 12px 24px ${theme?.primary_color || '#3b82f6'}20` : '0 6px 16px rgba(15,23,42,0.04)',
                         minWidth: '240px'
                       }}
                     >
@@ -77,7 +92,7 @@ export default function GuestVenueMapPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               
               {/* Map Bounds */}
-              <div style={{ width: '100%', background: 'white', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: 'var(--shadow-xl)', position: 'relative' }}>
+              <div style={{ width: '100%', background: 'white', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', position: 'relative' }}>
                  <div style={{ position: 'relative', width: '100%', paddingBottom: '100%', background: '#f8fafc', overflow: 'hidden' }}>
                     
                     {activeMap.image ? (
@@ -106,8 +121,8 @@ export default function GuestVenueMapPage() {
               </div>
 
               {/* Legend List */}
-              <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.25rem', boxShadow: 'var(--shadow-sm)' }}>
-                 <h3 style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--color-text-main)', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Key Locations</h3>
+              <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.25rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                 <h3 style={{ fontSize: '0.875rem', fontWeight: 800, color: '#0f172a', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Key Locations</h3>
                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.875rem' }}>
                     {activeMap.zones.map(zone => (
                        <div key={zone.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

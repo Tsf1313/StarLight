@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useOutletContext } from 'react-router-dom'; // NEW: Hook to catch the theme
 import { Trophy } from 'lucide-react';
 import { initialTournaments, guestTournamentData } from '../../data/mockData';
 
@@ -6,17 +7,29 @@ export default function GuestTournamentPage() {
   const [activeTournamentId, setActiveTournamentId] = useState(initialTournaments.length > 0 ? initialTournaments[0].id : null);
   const [activeTab, setActiveTab] = useState('bracket');
   
+  // Catch the custom theme passed down from GuestLayout
+  const { theme } = useOutletContext();
+
   const activeTournament = initialTournaments.find(t => t.id === activeTournamentId);
   const { liveMatch, standings } = guestTournamentData;
 
   return (
-    <div className="animate-fade-in" style={{ padding: '1.25rem', paddingBottom: '2rem' }}>
+    <div 
+      className="animate-fade-in" 
+      style={{ 
+        padding: '1.25rem', 
+        paddingBottom: '2rem',
+        minHeight: '100%',
+        background: '#f8fafc' /* Clean, solid light-gray background */
+      }}
+    >
       <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <div style={{ padding: '0.75rem', background: 'var(--color-primary)', borderRadius: '12px', color: 'white' }}>
+        {/* Dynamic primary color for the header icon */}
+        <div style={{ padding: '0.75rem', background: theme?.primary_color || 'var(--color-primary)', borderRadius: '12px', color: 'white' }}>
           <Trophy size={24} />
         </div>
         <div>
-          <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-text-main)' }}>Tournaments</h1>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a' }}>Tournaments</h1>
           <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Live Brackets & Standings</p>
         </div>
       </div>
@@ -35,7 +48,7 @@ export default function GuestTournamentPage() {
               <select 
                 value={activeTournamentId} 
                 onChange={(e) => setActiveTournamentId(Number(e.target.value))}
-                style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', background: 'white', fontSize: '0.95rem', fontWeight: 600, color: 'var(--color-text-main)', boxShadow: 'var(--shadow-sm)' }}
+                style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', background: 'white', fontSize: '0.95rem', fontWeight: 600, color: '#0f172a', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
               >
                 {initialTournaments.map(t => (
                   <option key={t.id} value={t.id}>{t.name} {t.status === 'Live' ? '🔴' : ''}</option>
@@ -47,25 +60,26 @@ export default function GuestTournamentPage() {
           {activeTournament?.status === 'Live' && activeTournament.previewType !== 'external' && activeTournament.matches?.q1 && (
             <div style={{ marginBottom: '1.5rem' }}>
               <h2 style={{ fontSize: '0.875rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>Current Top Match</h2>
-              <div className="hover-lift" style={{ background: 'white', border: '2px solid var(--color-danger)', borderRadius: '16px', padding: '1.5rem', textAlign: 'center', position: 'relative', boxShadow: 'var(--shadow-md)' }}>
-                 <div style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: 'var(--color-danger)', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '99px', fontSize: '0.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.375rem', border: '2px solid white' }}>
+              {/* Dynamic primary color for Live Match border */}
+              <div className="hover-lift" style={{ background: 'white', border: `2px solid ${theme?.primary_color || 'var(--color-primary)'}`, borderRadius: '16px', padding: '1.5rem', textAlign: 'center', position: 'relative', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
+                 <div style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: theme?.primary_color || 'var(--color-primary)', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '99px', fontSize: '0.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.375rem', border: '2px solid white' }}>
                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'white' }} className="animate-pulse"></div>
                    LIVE: {liveMatch.round}
                  </div>
                  
                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginTop: '1rem' }}>
                     <div style={{ flex: 1 }}>
-                      <p style={{ fontWeight: 800, color: 'var(--color-text-main)', fontSize: '1rem' }}>{activeTournament.matches.q1.t1}</p>
+                      <p style={{ fontWeight: 800, color: '#0f172a', fontSize: '1rem' }}>{activeTournament.matches.q1.t1}</p>
                     </div>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--color-text-main)', lineHeight: 1 }}>
+                      <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>
                         {activeTournament.matches.q1.s1}<span style={{ color: '#cbd5e1', margin: '0 0.5rem' }}>-</span>{activeTournament.matches.q1.s2}
                       </div>
                     </div>
 
                     <div style={{ flex: 1 }}>
-                      <p style={{ fontWeight: 800, color: 'var(--color-text-main)', fontSize: '1rem' }}>{activeTournament.matches.q1.t2}</p>
+                      <p style={{ fontWeight: 800, color: '#0f172a', fontSize: '1rem' }}>{activeTournament.matches.q1.t2}</p>
                     </div>
                  </div>
               </div>
@@ -77,14 +91,16 @@ export default function GuestTournamentPage() {
              <button 
                 onClick={() => setActiveTab('bracket')}
                 className="scale-btn" 
-                style={{ flex: 1, padding: '0.625rem', background: activeTab === 'bracket' ? 'white' : 'transparent', borderRadius: '8px', fontWeight: activeTab === 'bracket' ? 700 : 600, color: activeTab === 'bracket' ? 'var(--color-primary-dark)' : '#64748b', boxShadow: activeTab === 'bracket' ? 'var(--shadow-sm)' : 'none', transition: 'all 0.2s' }}
+                // Dynamic active tab text color
+                style={{ flex: 1, padding: '0.625rem', background: activeTab === 'bracket' ? 'white' : 'transparent', borderRadius: '8px', fontWeight: activeTab === 'bracket' ? 700 : 600, color: activeTab === 'bracket' ? (theme?.primary_color || 'var(--color-primary-dark)') : '#64748b', boxShadow: activeTab === 'bracket' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none', transition: 'all 0.2s' }}
              >
                 Bracket
              </button>
              <button 
                 onClick={() => setActiveTab('standings')}
                 className="scale-btn" 
-                style={{ flex: 1, padding: '0.625rem', background: activeTab === 'standings' ? 'white' : 'transparent', borderRadius: '8px', fontWeight: activeTab === 'standings' ? 700 : 600, color: activeTab === 'standings' ? 'var(--color-primary-dark)' : '#64748b', boxShadow: activeTab === 'standings' ? 'var(--shadow-sm)' : 'none', transition: 'all 0.2s' }}
+                 // Dynamic active tab text color
+                style={{ flex: 1, padding: '0.625rem', background: activeTab === 'standings' ? 'white' : 'transparent', borderRadius: '8px', fontWeight: activeTab === 'standings' ? 700 : 600, color: activeTab === 'standings' ? (theme?.primary_color || 'var(--color-primary-dark)') : '#64748b', boxShadow: activeTab === 'standings' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none', transition: 'all 0.2s' }}
              >
                 Standings
              </button>
@@ -110,7 +126,7 @@ export default function GuestTournamentPage() {
                   <button
                     onClick={() => window.open(activeTournament.externalUrl, '_blank')}
                     className="btnSolid scale-btn"
-                    style={{ alignSelf: 'flex-start', padding: '0.9rem 1rem', background: 'var(--color-primary-dark)', color: 'white' }}
+                    style={{ alignSelf: 'flex-start', padding: '0.9rem 1rem', background: theme?.primary_color || 'var(--color-primary-dark)', color: 'white' }}
                   >
                     Open Tournament Website
                   </button>
@@ -150,9 +166,10 @@ export default function GuestTournamentPage() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', position: 'relative' }}>
                        <div style={{ position: 'absolute', left: '-1rem', top: '55%', width: '1rem', height: '1px', background: '#cbd5e1' }}></div>
                        
-                       <div style={{ fontSize: '0.625rem', fontWeight: 800, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Final</div>
-                       <div style={{ background: 'white', border: '2px solid #f59e0b', borderRadius: '8px', width: '160px', overflow: 'hidden' }}>
-                          <div style={{ padding: '0.5rem 0.75rem', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #fef3c7', fontSize: '0.875rem', fontWeight: 800, background: '#fffbeb' }}><span>{activeTournament.matches.f1.t1}</span><span>{activeTournament.matches.f1.s1}</span></div>
+                       {/* Final Match border dynamically colored */}
+                       <div style={{ fontSize: '0.625rem', fontWeight: 800, color: theme?.primary_color || '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Final</div>
+                       <div style={{ background: 'white', border: `2px solid ${theme?.primary_color || '#f59e0b'}`, borderRadius: '8px', width: '160px', overflow: 'hidden' }}>
+                          <div style={{ padding: '0.5rem 0.75rem', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #fef3c7', fontSize: '0.875rem', fontWeight: 800, background: `${theme?.primary_color || '#f59e0b'}15` }}><span>{activeTournament.matches.f1.t1}</span><span>{activeTournament.matches.f1.s1}</span></div>
                           <div style={{ padding: '0.5rem 0.75rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', fontWeight: 600 }}><span>{activeTournament.matches.f1.t2}</span><span>{activeTournament.matches.f1.s2}</span></div>
                        </div>
                     </div>
@@ -175,12 +192,13 @@ export default function GuestTournamentPage() {
                   <tbody>
                      {standings.map((team, i) => (
                         <tr key={i} style={{ borderTop: '1px solid #e2e8f0' }} className="hover-lift">
-                           <td style={{ padding: '1rem', fontWeight: 700, color: i === 0 ? 'var(--color-warning)' : 'var(--color-text-muted)', fontSize: '0.875rem' }}>
+                           <td style={{ padding: '1rem', fontWeight: 700, color: i === 0 ? 'var(--color-warning)' : '#94a3b8', fontSize: '0.875rem' }}>
                               #{team.rank}
                            </td>
-                           <td style={{ padding: '1rem', fontWeight: 700, color: 'var(--color-text-main)', fontSize: '0.875rem' }}>{team.name}</td>
+                           <td style={{ padding: '1rem', fontWeight: 700, color: '#0f172a', fontSize: '0.875rem' }}>{team.name}</td>
                            <td style={{ padding: '1rem', textAlign: 'center', color: '#64748b', fontWeight: 500, fontSize: '0.875rem' }}>{team.w}-{team.l}</td>
-                           <td style={{ padding: '1rem', textAlign: 'center', fontWeight: 800, color: 'var(--color-primary-dark)', fontSize: '0.875rem' }}>{team.pts}</td>
+                           {/* Dynamic primary color for Points */}
+                           <td style={{ padding: '1rem', textAlign: 'center', fontWeight: 800, color: theme?.primary_color || 'var(--color-primary-dark)', fontSize: '0.875rem' }}>{team.pts}</td>
                         </tr>
                      ))}
                   </tbody>

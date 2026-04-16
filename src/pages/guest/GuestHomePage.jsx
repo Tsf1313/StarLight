@@ -12,12 +12,10 @@ export default function GuestHomePage() {
     <div 
       className="animate-fade-in" 
       style={{ 
-        padding: '1.25rem',
+        padding: '1.25rem', 
+        paddingBottom: '2rem',
         minHeight: '100%',
-        // Apply the background image if it exists
-        background: theme?.background_url ? `url(${theme.background_url}) top/cover no-repeat` : 'transparent',
-        // Add a subtle white overlay so the text remains readable over any image
-        boxShadow: theme?.background_url ? 'inset 0 0 0 2000px rgba(248, 250, 252, 0.85)' : 'none'
+        background: '#f8fafc' /* Clean, solid light-gray background */
       }}
     >
       {/* Hero Event Card */}
