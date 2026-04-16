@@ -1,144 +1,91 @@
-# EventFlow Backend Integration Guide
+🏆 EventFlow: Database & Operations Handover Guide
 
-This document outlines the frontend architecture and provides a smooth integration path for backend developers to replace the frontend mock-data layer with real API endpoints.
+This document provides the technical details and operational instructions for the current state of the EventFlow project. It is intended for teammates taking over development.
+🚀 1. How to Run the Project
 
-## Architecture Overview
+EventFlow requires both the Backend (Node.js/SQLite) and Frontend (Vite/React) to be running simultaneously.
+Step 1: Start the Backend
 
-The EventFlow front-end uses React (via Vite) with clean separation between:
-1. **Landing/Auth (`src/pages/landing`, `src/pages/auth`)**: Public pages and auth flows.
-2. **Host Dashboard (`src/pages/host`)**: Desktop-first admin panels.
-3. **Guest App (`src/pages/guest`)**: Mobile-first attendee experience.
+    Open a terminal in the project root.
 
-The current implementation uses a centralized mock-data module at `src/data/mockData.js`. That file is intentionally a blueprint for backend API contracts and database models.
+    Run: node server.js
 
-## What Backend Developers Should Do
+    What happens: The server initializes eventflow.db (SQLite). If the file is missing, it creates it and builds the customization and tournaments tables automatically. It also monitors the uploads/ folder for images.
 
-### 1. Keep UI components intact
-No React page files need a full rewrite. The front-end already expects data in a format that maps directly to API responses.
+Step 2: Start the Frontend
 
-### 2. Add a frontend API service
-Create `src/services/api.js` or `src/services/apiClient.js` and expose functions such as:
-- `getEvents()`
-- `getAttendees()`
-- `getTournaments()`
-- `getBrochureFiles()`
-- `getVenueMaps()`
-- `getFeedbackFormConfig()`
-- `saveFeedbackFormConfig(config)`
-- `login(credentials)`
-- `register(data)`
+    Open a second terminal.
 
-Use `fetch` or `axios` to call backend endpoints and return JSON payloads.
+    Run: npm run dev
 
-### 3. Replace mock-data imports with API calls
-In the pages that currently use `mockData.js`, change the page lifecycle to use `useEffect` and `useState`:
-- call the API service on mount
-- set state with the response
-- preserve the same data shapes as the existing mock object
+    What happens: Launches the React application. It will attempt to communicate with the backend at http://localhost:5000.
 
-This means the UI will behave correctly without additional structural changes.
+🛠️ 2. The Database Architecture
+SQLite & JSON Storage
 
-## Suggested API Contracts
+We use SQLite (eventflow.db) for its simplicity—it is a single file and requires no external setup.
 
-### Authentication
-- `POST /api/auth/login`
-- `POST /api/auth/register`
+    Relational Data: Standard fields like primary_color or status are stored in columns.
 
-Payloads should return a user object and session token (or set cookie).
+    Complex Data (JSON): The tournament bracket (teams, scores, matchups) is stored as a JSON string in the bracket_data column. This allows us to save complex nested objects without needing a complicated table structure.
 
-### Host Dashboard
-- `GET /api/dashboard/events`
-- `GET /api/dashboard/attendance`
-- `GET /api/dashboard/tournaments`
-- `GET /api/dashboard/brochure`
-- `GET /api/dashboard/venue-maps`
-- `GET /api/dashboard/feedback-form`
-- `POST /api/dashboard/feedback-form`
-- `GET /api/dashboard/customize`
+The API Bridge (src/services/api.js)
 
-### Guest App
-- `GET /api/guest/home`
-- `GET /api/guest/brochure`
-- `GET /api/guest/map`
-- `GET /api/guest/tournament`
-- `GET /api/guest/feedback`
+All communication with the database happens through this file.
 
-## Data Model Summary
+    Rule: Do not write fetch() calls inside your components. Use the api object.
 
-### Event
-- `id` (string, UUID)
-- `title` (string)
-- `dateRange` (string)
-- `location` (string)
-- `status` (string)
+    Example: const data = await api.getTournaments();
 
-### Attendee
-- `id` (string)
-- `name` (string)
-- `email` (string)
-- `status` (string)
-- `time` (string)
-- `type` (string)
-- `source` (string)
+✅ 3. Features Implemented
+🎨 Customization & Global Theming
 
-### Tournament
-- `id` (string)
-- `name` (string)
-- `status` (string)
-- `format` (string)
-- `participants` (array of strings)
-- `matches` (object)
+    Host Dashboard: Allows uploading a logo and background image, and picking a primary theme color.
 
-### Brochure File
-- `id` (string)
-- `name` (string)
-- `size` (number)
-- `type` (string)
-- `url` (string)
-- `info` (string)
+    Backend: Uses Multer to save physical files into the uploads/ directory and stores the file paths in the DB.
 
-### Venue Map
-- `id` (string)
-- `name` (string)
-- `image` (string)
-- `zones` (array)
-  - `id` (string)
-  - `name` (string)
-  - `color` (string)
-  - `x` (number)
-  - `y` (number)
+    Global Injection: GuestLayout.jsx fetches the theme on load and injects the primary_color into a CSS variable: --theme-primary.
 
-### Feedback Form Configuration
-- `heading` (string)
-- `description` (string)
-- `link` (string)
-- `buttonText` (string)
-- `note` (string)
+    Usage: You can use var(--theme-primary) in any CSS/Module file to stay synced with the host's branding.
 
-## Practical Backend Integration Steps
+🎮 Tournament Management
 
-1. Start by wiring the auth endpoints used by `LoginPage.jsx` and `RegisterPage.jsx`.
-2. Replace `mockData` page imports in host/guest pages with API calls.
-3. Use a single shared `apiClient` for headers, auth tokens, and response parsing.
-4. Keep the original mock shapes while backend integration is in progress.
-5. When APIs are stable, remove `src/data/mockData.js` and any direct static imports.
+    Dual-Mode Support:
 
-## Backend Developer Checklist
-- [ ] Implement auth endpoints and session handling.
-- [ ] Create endpoints for event and attendee data.
-- [ ] Create endpoints for tournament data and live status.
-- [ ] Add brochure file CRUD and file upload support.
-- [ ] Add venue map data and zone metadata.
-- [ ] Add a feedback form configuration endpoint.
-- [ ] Use localStorage or persistent storage for saved host form settings.
-- [ ] Keep payloads consistent with the existing mock data shapes.
-- [ ] Test pages by swapping one API call at a time.
+        Internal Bracket: Managed directly in the app. Hosts can update scores for Quarter-Finals, Semi-Finals, and Finals.
 
-## Notes for a Smooth Handoff
+        External Link: Hosts can paste a link to Challonge/Smash.gg. The guest app will detect this and show an "Open Website" button instead of a bracket.
 
-- The front-end is intentionally decoupled from any backend implementation.
-- Backend should return clean JSON that matches the current mock data structure.
-- Frontend components expect arrays and objects, not nested wrappers.
-- Use the existing `mockData.js` file as the canonical payload reference during integration.
+    Live Updates: The Guest view is fully synchronized with the database; any score saved in the Host dashboard reflects instantly for the Guest.
 
-Once these backend endpoints are live, the front-end will switch to real data with minimal UI changes.
+📂 4. Critical File Map
+File Path	Role
+
+server.js	The Backend server. 
+Manages DB connection and file uploads.
+
+src/services/api.js	The Bridge. 
+Contains all functions for talking to the DB.
+
+src/components/guest/GuestLayout.jsx	The Theme Manager. 
+Fetches and distributes the custom branding.
+
+src/pages/host/TournamentPage.jsx	
+Host-side bracket and tournament editor.
+
+src/pages/guest/GuestTournamentPage.jsx	
+Guest-side live bracket/link viewer.
+
+eventflow.db	
+The actual database file (SQLite).
+
+uploads/	
+Folder containing all user-uploaded logos and images.
+
+⚠️ 5. Important Notes for Teammates
+
+    .gitignore: Ensure eventflow.db and the uploads/ folder are in your .gitignore. We should not be pushing our local database files to GitHub, as it will overwrite each other's work.(for when deploying only as currently the database is still being hosted locally so just push everything)
+
+    Schema Changes: If you need to add a new table or column, you must update the CREATE TABLE query at the top of server.js.
+
+    Image Paths: If images aren't loading, check if the uploads folder exists in your project root. The server needs this folder to save files.
