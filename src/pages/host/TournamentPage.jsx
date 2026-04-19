@@ -197,6 +197,19 @@ export default function TournamentPage() {
     }
   };
 
+  const handleDeleteTournament = async (id) => {
+    if (!window.confirm('Delete this tournament? This action cannot be undone.')) return;
+    try {
+      await api.deleteTournament(id, selectedEventId);
+      await fetchTournaments();
+      if (activeTournamentId === id) {
+        setActiveTournamentId(null);
+      }
+    } catch (err) {
+      alert('Failed to delete tournament: ' + err.message);
+    }
+  };
+
   if (tournaments.length === 0) {
     return (
       <div className="animate-fade-in" style={{ maxWidth: '1400px', margin: '0 auto', textAlign: 'center', padding: '4rem 1rem' }}>
@@ -379,6 +392,9 @@ export default function TournamentPage() {
                        <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>{activeTournament.name}</h3>
                        <button onClick={handleEditClick} className="btnOutline scale-btn" style={{ padding: '0.5rem 0.9rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                          <Edit size={14} /> Edit Settings
+                       </button>
+                       <button onClick={() => handleDeleteTournament(activeTournament.id)} className="btnOutline scale-btn" style={{ padding: '0.5rem 0.9rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#b91c1c', borderColor: '#fecaca' }}>
+                         <X size={14} /> Delete
                        </button>
                      </div>
                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', background: activeTournament.status === 'Live' ? '#fef2f2' : '#f8fafc', color: activeTournament.status === 'Live' ? 'var(--color-danger)' : '#64748b', border: activeTournament.status === 'Live' ? '1px solid #fca5a5' : '1px solid #cbd5e1', padding: '0.35rem 0.9rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 700 }}>

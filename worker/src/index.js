@@ -493,7 +493,7 @@ async function handleReplaceAnnouncements(request, env) {
 // ==========================================
 
 async function handleGuestGetSchedule(request, env) {
-  const eventId = await getCurrentEventForGuests(env);
+  const data = await parseJson(request);
   const schedules = await dbQuery(env.DB, 'SELECT * FROM schedules WHERE event_id = ? ORDER BY session_time ASC', [eventId]);
   return jsonResponse(schedules.results || []);
 }
@@ -725,7 +725,8 @@ async function handleFileUpload(request, env) {
 async function handleServeFile(request, env, pathname) {
   try {
     // Extract filename from /files/filename
-    const filename = pathname.replace(/^\/files\//, '');
+    const encodedFilename = pathname.replace(/^\/files\//, '');
+    const filename = decodeURIComponent(encodedFilename);
     
     if (!filename) {
       return jsonResponse({ error: 'Invalid file path' }, 400);

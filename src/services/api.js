@@ -48,6 +48,11 @@ const fetchWithHandler = async (url, options = {}) => {
 const mapAttendeeFromApi = (row) => ({
   id: row.id,
   name: row.name,
+    deleteTournament: (id, eventId = 'e_001') => {
+      return fetchWithHandler(`${API_BASE_URL}/dashboard/tournaments/${encodeURIComponent(id)}?event_id=${encodeURIComponent(eventId)}`, {
+        method: 'DELETE',
+      });
+    },
   email: row.email,
   status: row.status || 'Absent',
   time: row.check_in_time || '-',
@@ -256,6 +261,12 @@ export const api = {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...tournamentData, event_id: eventId }),
+    });
+  },
+
+  deleteTournament: (id, eventId = 'e_001') => {
+    return fetchWithHandler(`${API_BASE_URL}/dashboard/tournaments/${encodeURIComponent(id)}?event_id=${encodeURIComponent(eventId)}`, {
+      method: 'DELETE',
     });
   },
 
