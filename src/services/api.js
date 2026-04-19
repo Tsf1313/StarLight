@@ -63,8 +63,13 @@ const fetchWithHandler = async (url, options = {}) => {
     const response = await fetch(url, options);
     return await parseResponse(response);
   } catch (error) {
+    const isNetworkError =
+      error instanceof TypeError ||
+      /failed to fetch|network/i.test(String(error?.message || ''));
+
     const shouldTryFallback =
       !isLocal &&
+      isNetworkError &&
       typeof url === 'string' &&
       url.startsWith(CLOUD_API_BASE_URL);
 
@@ -73,8 +78,13 @@ const fetchWithHandler = async (url, options = {}) => {
     }
 
     const fallbackUrl = `${CLOUD_API_FALLBACK_URL}${url.slice(CLOUD_API_BASE_URL.length)}`;
-    const fallbackResponse = await fetch(fallbackUrl, options);
-    return await parseResponse(fallbackResponse);
+    try {
+      const fallbackResponse = await fetch(fallbackUrl, options);
+      return await parseResponse(fallbackResponse);
+    } catch {
+      // Keep the original primary error so HTTP/API errors are not masked.
+      throw error;
+    }
   }
 };
 
