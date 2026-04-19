@@ -15,7 +15,13 @@ export default function VenueMapPage() {
   const [activeMapId, setActiveMapId] = useState(null);
   const [editingMapNameId, setEditingMapNameId] = useState(null);
 
-  const activeMap = maps.find(m => m.id === activeMapId) || maps[0];
+  const activeMap = maps.find(m => m.id === activeMapId) || maps[0] || {
+    id: 'fallback-map',
+    name: 'Map',
+    image: null,
+    zones: [],
+    activeZoneId: null,
+  };
 
   const loadVenueMaps = async (eventId) => {
     try {
@@ -31,6 +37,9 @@ export default function VenueMapPage() {
       }
     } catch (error) {
       console.error('Failed to load venue maps:', error);
+      const starterId = `${eventId || 'e_001'}_map_${Date.now()}`;
+      setMaps([{ id: starterId, name: 'Floor 1', image: null, zones: [], activeZoneId: null }]);
+      setActiveMapId(starterId);
     } finally {
       setIsLoading(false);
     }

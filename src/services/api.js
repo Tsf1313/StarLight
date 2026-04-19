@@ -1,19 +1,48 @@
 // src/services/api.js
 
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const API_BASE_URL = isLocal 
-  ? 'http://localhost:3000/api' 
-  : 'https://api.eventflow.hamstersame.org/api';
+const CLOUD_API_BASE_URL = 'https://api.eventflow.hamstersame.org/api';
+const CLOUD_API_FALLBACK_URL = 'https://eventflow-api.edmundtingyanyi0529.workers.dev/api';
+const API_BASE_URL = isLocal
+  ? 'http://localhost:3000/api'
+  : CLOUD_API_BASE_URL;
 
-// Helper function to handle fetch responses and errors cleanly
-const fetchWithHandler = async (url, options = {}) => {
-  const response = await fetch(url, options);
-  const data = await response.json();
-  
+const parseResponse = async (response) => {
+  const text = await response.text();
+  let data = {};
+
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = text ? { message: text } : {};
+  }
+
   if (!response.ok) {
     throw new Error(data.message || data.error || `HTTP error! status: ${response.status}`);
   }
+
   return data;
+};
+
+// Helper function to handle fetch responses and errors cleanly
+const fetchWithHandler = async (url, options = {}) => {
+  try {
+    const response = await fetch(url, options);
+    return await parseResponse(response);
+  } catch (error) {
+    const shouldTryFallback =
+      !isLocal &&
+      typeof url === 'string' &&
+      url.startsWith(CLOUD_API_BASE_URL);
+
+    if (!shouldTryFallback) {
+      throw error;
+    }
+
+    const fallbackUrl = `${CLOUD_API_FALLBACK_URL}${url.slice(CLOUD_API_BASE_URL.length)}`;
+    const fallbackResponse = await fetch(fallbackUrl, options);
+    return await parseResponse(fallbackResponse);
+  }
 };
 
 const mapAttendeeFromApi = (row) => ({
