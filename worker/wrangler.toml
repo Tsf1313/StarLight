@@ -2,6 +2,21 @@ name = "eventflow-api"
 main = "src/index.js"
 compatibility_date = "2024-01-01"
 
+vars = { ENVIRONMENT = "default", API_URL = "https://eventflow-api.edmundtingyanyi0529.workers.dev", R2_DOMAIN = "eventflow-uploads.your-account.r2.dev" }
+
+[[d1_databases]]
+binding = "DB"
+database_name = "eventflow-prod"
+database_id = "c86cee4a-71e7-4f51-9ee5-c10828d4e886"
+
+[[r2_buckets]]
+binding = "UPLOADS"
+bucket_name = "eventflow-uploads"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "f06b9d4ace1743498f1235fe9feca89e"
+
 # Environment Variables
 [env.production]
 vars = { ENVIRONMENT = "production", API_URL = "https://api.eventflow.hamstersame.org", R2_DOMAIN = "eventflow-uploads.your-account.r2.dev" }

@@ -40,6 +40,7 @@ export default {
       if (pathname === '/api/dashboard/tournaments' && method === 'GET') return handleGetTournaments(request, env);
       if (pathname === '/api/dashboard/tournaments' && method === 'POST') return handleCreateTournament(request, env);
       if (pathname.match(/^\/api\/dashboard\/tournaments\/[^/]+$/) && method === 'PUT') return handleUpdateTournament(request, env, pathname);
+      if (pathname.match(/^\/api\/dashboard\/tournaments\/[^/]+$/) && method === 'DELETE') return handleDeleteTournament(request, env, pathname);
       if (pathname === '/api/dashboard/schedules' && method === 'GET') return handleGetSchedules(request, env);
       if (pathname === '/api/dashboard/schedules' && method === 'POST') return handleCreateSchedule(request, env);
       if (pathname.match(/^\/api\/dashboard\/schedules\/[^/]+$/) && method === 'PUT') return handleUpdateSchedule(request, env, pathname);
@@ -336,6 +337,19 @@ async function handleUpdateTournament(request, env, pathname) {
   );
 
   return jsonResponse({ updated: 1 });
+}
+
+async function handleDeleteTournament(request, env, pathname) {
+  const tournamentId = pathname.split('/').pop();
+  const eventId = getQueryParam(request.url, 'event_id');
+
+  await dbRun(
+    env.DB,
+    'DELETE FROM tournaments WHERE id = ? AND event_id = ?',
+    [tournamentId, eventId]
+  );
+
+  return jsonResponse({ deleted: 1 });
 }
 
 // ==========================================
@@ -700,7 +714,8 @@ async function handleFileUpload(request, env) {
     }
 
     const buffer = await file.arrayBuffer();
-    const filename = `image_${Date.now()}_${file.name}`;
+    const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const filename = `image_${Date.now()}_${cleanName}`;
 
     // Upload to R2
     await env.UPLOADS.put(filename, buffer, {
@@ -712,7 +727,7 @@ async function handleFileUpload(request, env) {
     // Return URL pointing to our /files/ endpoint (Worker will serve from R2)
     const requestUrl = new URL(request.url);
     const origin = `${requestUrl.protocol}//${requestUrl.host}`;
-    const imageUrl = `${origin}/files/${filename}`;
+    const imageUrl = `${origin}/files/${encodeURIComponent(filename)}`;
 
     return jsonResponse({ url: imageUrl });
   } catch (error) {

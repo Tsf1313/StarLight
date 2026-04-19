@@ -19,6 +19,16 @@ const normalizeVenueImageUrl = (rawUrl) => {
   if (!rawUrl) return null;
   if (typeof rawUrl !== 'string') return rawUrl;
 
+  const origin = getApiOrigin();
+
+  // Convert legacy custom-domain file URLs (currently NXDOMAIN) to the active API origin.
+  if (rawUrl.startsWith('https://api.eventflow.hamstersame.org/files/')) {
+    const filename = rawUrl.slice('https://api.eventflow.hamstersame.org/files/'.length);
+    if (origin && filename) {
+      return `${origin}/files/${filename}`;
+    }
+  }
+
   // Keep already-correct /files URLs and regular absolute URLs.
   if (rawUrl.includes('/files/')) return rawUrl;
 
@@ -26,7 +36,6 @@ const normalizeVenueImageUrl = (rawUrl) => {
   if (rawUrl.includes('your-account.r2.dev')) {
     const parts = rawUrl.split('/');
     const filename = parts[parts.length - 1];
-    const origin = getApiOrigin();
     if (origin && filename) {
       return `${origin}/files/${filename}`;
     }
