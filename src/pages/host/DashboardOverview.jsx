@@ -209,6 +209,9 @@ export default function DashboardOverview() {
 
       if (showToGuestsEventId === eventId && remaining[0]?.id) {
         await handleShowToGuests(remaining[0].id);
+      } else if (showToGuestsEventId === eventId && !remaining[0]?.id) {
+        await api.setSelectedEventForGuests(null);
+        setShowToGuestsEventId(null);
       }
 
       setOpenEventMenu(null);

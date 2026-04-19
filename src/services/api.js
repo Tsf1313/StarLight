@@ -450,7 +450,7 @@ export const api = {
       return data;
     } catch (error) {
       console.error('Failed to get selected event for guests:', error);
-      return { event_id: 'e_001' };
+      return { event_id: null, event: null };
     }
   },
 

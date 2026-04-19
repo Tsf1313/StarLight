@@ -670,6 +670,13 @@ async function handleGetActivity(request, env) {
 
 async function handleGetCurrentEventForGuests(request, env) {
   const eventId = await getCurrentEventForGuests(env);
+  if (!eventId) {
+    return jsonResponse({
+      event_id: null,
+      event: null,
+    });
+  }
+
   const event = await dbFirst(env.DB, 'SELECT * FROM events WHERE id = ?', [eventId]);
 
   return jsonResponse({
@@ -682,10 +689,10 @@ async function handleSetCurrentEventForGuests(request, env) {
   const data = await parseJson(request);
   const { event_id } = data || {};
 
-  if (event_id) {
-    // Store in a KV namespace (if available) or use a simpler approach
-    // For now, we'll store this in environment state
+  if (event_id && String(event_id).trim()) {
     await env.KV.put('current_event_for_guests', event_id);
+  } else {
+    await env.KV.delete('current_event_for_guests');
   }
 
   const current = await getCurrentEventForGuests(env);
@@ -697,7 +704,7 @@ async function getCurrentEventForGuests(env) {
     const stored = await env.KV.get('current_event_for_guests');
     if (stored) return stored;
   }
-  return 'e_001';
+  return null;
 }
 
 // ==========================================

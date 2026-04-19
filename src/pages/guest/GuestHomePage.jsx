@@ -2,14 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom'; // NEW: Hook to catch the theme
 import { Trophy, BookOpen, Map, Share2, AlertCircle, Clock } from 'lucide-react';
 import AdBanner from '../../components/ui/AdBanner';
-import { guestAnnouncements, guestSchedule } from '../../data/mockData';
 import { api } from '../../services/api';
 
 export default function GuestHomePage() {
   // Catch the custom theme passed down from GuestLayout
   const { theme } = useOutletContext(); 
-   const [announcements, setAnnouncements] = useState(guestAnnouncements);
-   const [schedule, setSchedule] = useState(guestSchedule);
+   const [announcements, setAnnouncements] = useState([]);
+   const [schedule, setSchedule] = useState([]);
    const [guestEvent, setGuestEvent] = useState(null);
 
    useEffect(() => {
@@ -20,25 +19,31 @@ export default function GuestHomePage() {
                api.getGuestSchedule(),
             ]);
 
-                  const guestEventData = await api.getSelectedEventForGuests();
-                  if (guestEventData?.event) {
-                     setGuestEvent(guestEventData.event);
-                  }
+            const guestEventData = await api.getSelectedEventForGuests();
+            setGuestEvent(guestEventData?.event || null);
 
-            if (announcementRows.length) {
-               setAnnouncements(announcementRows);
-            }
-            if (scheduleRows.length) {
-               setSchedule(scheduleRows);
-            }
+            setAnnouncements(Array.isArray(announcementRows) ? announcementRows : []);
+            setSchedule(Array.isArray(scheduleRows) ? scheduleRows : []);
          } catch (error) {
             console.error('Failed to load guest home data:', error);
          }
       };
 
       loadGuestHomeData();
-      const intervalId = setInterval(loadGuestHomeData, 5000);
-      return () => clearInterval(intervalId);
+
+      const handleStorageSync = (event) => {
+        if (event.key === 'showToGuestsEventId') {
+          loadGuestHomeData();
+        }
+      };
+
+      window.addEventListener('storage', handleStorageSync);
+      const intervalId = setInterval(loadGuestHomeData, 2000);
+
+      return () => {
+        window.removeEventListener('storage', handleStorageSync);
+        clearInterval(intervalId);
+      };
    }, []);
 
   return (
@@ -55,10 +60,22 @@ export default function GuestHomePage() {
       <div className="hover-lift" style={{ background: theme?.primary_color || 'var(--color-primary-dark)', color: 'white', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.5rem', position: 'relative', overflow: 'hidden', boxShadow: `0 10px 15px -3px ${theme?.primary_color || 'var(--color-primary-dark)'}60` }}>
         <div style={{ position: 'absolute', top: -40, right: -40, width: 120, height: 120, background: 'rgba(255,255,255,0.1)', borderRadius: '50%' }}></div>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', background: 'var(--color-success)', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '99px', fontSize: '0.75rem', fontWeight: 700, marginBottom: '1rem' }}>
-           <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'white' }} className="animate-pulse"></div> Live Now
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'white' }} className={guestEvent ? 'animate-pulse' : ''}></div> {guestEvent ? 'Live Now' : 'Standby'}
         </div>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem', letterSpacing: '-0.025em' }}>{guestEvent?.title || 'Tech Summit 2026'}</h1>
-        <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.8)' }}>{guestEvent?.date_range || 'Feb 25-27, 2026'}<br/>{guestEvent?.location || 'Convention Center'}</p>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem', letterSpacing: '-0.025em' }}>
+               {guestEvent?.title || 'No Event Right Now'}
+            </h1>
+            <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.8)' }}>
+               {guestEvent ? (
+                  <>
+                     {guestEvent?.date_range || ''}
+                     <br />
+                     {guestEvent?.location || ''}
+                  </>
+               ) : (
+                  'Please check back shortly for the next live event.'
+               )}
+            </p>
       </div>
 
       {/* Ad Space */}

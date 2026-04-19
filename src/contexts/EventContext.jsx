@@ -12,10 +12,10 @@ export const EventProvider = ({ children }) => {
     const storedSelectedEvent = localStorage.getItem('selectedEventId');
     const storedGuestEvent = localStorage.getItem('showToGuestsEventId');
     
-    if (storedSelectedEvent) {
+    if (storedSelectedEvent && storedSelectedEvent !== 'null') {
       setSelectedEventIdState(storedSelectedEvent);
     }
-    if (storedGuestEvent) {
+    if (storedGuestEvent && storedGuestEvent !== 'null') {
       setShowToGuestsEventIdState(storedGuestEvent);
     }
     
@@ -25,13 +25,21 @@ export const EventProvider = ({ children }) => {
   // Update selectedEventId and persist to localStorage
   const setSelectedEventId = (eventId) => {
     setSelectedEventIdState(eventId);
-    localStorage.setItem('selectedEventId', eventId);
+    if (eventId) {
+      localStorage.setItem('selectedEventId', eventId);
+    } else {
+      localStorage.removeItem('selectedEventId');
+    }
   };
 
   // Update showToGuestsEventId and persist to localStorage
   const setShowToGuestsEventId = (eventId) => {
     setShowToGuestsEventIdState(eventId);
-    localStorage.setItem('showToGuestsEventId', eventId);
+    if (eventId) {
+      localStorage.setItem('showToGuestsEventId', eventId);
+    } else {
+      localStorage.removeItem('showToGuestsEventId');
+    }
   };
 
   if (isLoading) {
