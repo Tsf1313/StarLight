@@ -385,6 +385,16 @@ export default function TournamentPage() {
           </div>
         </div>
       )}
+
+      {/* CREATE MODAL */}
+      {isModalOpen && (
+        <Modal
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleCreateTournament}
+          tournamentForm={tournamentForm}
+          setTournamentForm={setTournamentForm}
+        />
+      )}
     </div>
   );
 }
