@@ -1,14 +1,18 @@
 // src/services/api.js
 
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const SITE_API_BASE_URL = '/api';
 const CLOUD_API_BASE_URL = 'https://eventflow-api.edmundtingyanyi0529.workers.dev/api';
 const CLOUD_API_FALLBACK_URL = 'https://api.eventflow.hamstersame.org/api';
 const API_BASE_URL = isLocal
   ? 'http://localhost:3000/api'
-  : CLOUD_API_BASE_URL;
+  : SITE_API_BASE_URL;
 
 const getApiOrigin = () => {
   try {
+    if (!API_BASE_URL.startsWith('http')) {
+      return window.location.origin;
+    }
     return new URL(API_BASE_URL).origin;
   } catch {
     return '';
@@ -70,14 +74,23 @@ const fetchWithHandler = async (url, options = {}) => {
     const shouldTryFallback =
       !isLocal &&
       isNetworkError &&
-      typeof url === 'string' &&
-      url.startsWith(CLOUD_API_BASE_URL);
+      typeof url === 'string';
 
     if (!shouldTryFallback) {
       throw error;
     }
 
-    const fallbackUrl = `${CLOUD_API_FALLBACK_URL}${url.slice(CLOUD_API_BASE_URL.length)}`;
+    let fallbackUrl = null;
+    if (url.startsWith(SITE_API_BASE_URL)) {
+      fallbackUrl = `${CLOUD_API_BASE_URL}${url.slice(SITE_API_BASE_URL.length)}`;
+    } else if (url.startsWith(CLOUD_API_BASE_URL)) {
+      fallbackUrl = `${CLOUD_API_FALLBACK_URL}${url.slice(CLOUD_API_BASE_URL.length)}`;
+    }
+
+    if (!fallbackUrl) {
+      throw error;
+    }
+
     try {
       const fallbackResponse = await fetch(fallbackUrl, options);
       return await parseResponse(fallbackResponse);
