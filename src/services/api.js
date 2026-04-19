@@ -21,7 +21,6 @@ const normalizeVenueImageUrl = (rawUrl) => {
 
   const origin = getApiOrigin();
 
-  // Convert legacy custom-domain file URLs (currently NXDOMAIN) to the active API origin.
   if (rawUrl.startsWith('https://api.eventflow.hamstersame.org/files/')) {
     const filename = rawUrl.slice('https://api.eventflow.hamstersame.org/files/'.length);
     if (origin && filename) {
@@ -29,10 +28,8 @@ const normalizeVenueImageUrl = (rawUrl) => {
     }
   }
 
-  // Keep already-correct /files URLs and regular absolute URLs.
   if (rawUrl.includes('/files/')) return rawUrl;
 
-  // Convert legacy placeholder R2 URLs to current Worker file route.
   if (rawUrl.includes('your-account.r2.dev')) {
     const parts = rawUrl.split('/');
     const filename = parts[parts.length - 1];
@@ -61,7 +58,6 @@ const parseResponse = async (response) => {
   return data;
 };
 
-// Helper function to handle fetch responses and errors cleanly
 const fetchWithHandler = async (url, options = {}) => {
   try {
     const response = await fetch(url, options);
@@ -85,11 +81,6 @@ const fetchWithHandler = async (url, options = {}) => {
 const mapAttendeeFromApi = (row) => ({
   id: row.id,
   name: row.name,
-    deleteTournament: (id, eventId = 'e_001') => {
-      return fetchWithHandler(`${API_BASE_URL}/dashboard/tournaments/${encodeURIComponent(id)}?event_id=${encodeURIComponent(eventId)}`, {
-        method: 'DELETE',
-      });
-    },
   email: row.email,
   status: row.status || 'Absent',
   time: row.check_in_time || '-',
