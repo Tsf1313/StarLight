@@ -28,6 +28,44 @@ export default function TournamentPage() {
     externalUrl: ''
   });
 
+  const toLegacyRounds = (matches = {}) => {
+    const safe = (m) => ({ t1: m?.t1 || 'TBD', s1: Number(m?.s1 || 0), t2: m?.t2 || 'TBD', s2: Number(m?.s2 || 0) });
+    return [
+      { name: 'Quarter Finals', matches: [{ id: 'r0m0', ...safe(matches.q1) }, { id: 'r0m1', ...safe(matches.q2) }] },
+      { name: 'Semi Finals', matches: [{ id: 'r1m0', ...safe(matches.s1) }] },
+      { name: 'Final', matches: [{ id: 'r2m0', ...safe(matches.f1) }] },
+    ];
+  };
+
+  const normalizeTournament = (tournament) => {
+    const next = { ...tournament };
+    const bracketData = next?.bracket_data || {};
+
+    if (next.format === 'bracket') {
+      if (!Array.isArray(bracketData.rounds)) {
+        next.bracket_data = {
+          ...bracketData,
+          rounds: toLegacyRounds(bracketData.matches || {}),
+          participants: Array.isArray(bracketData.participants)
+            ? bracketData.participants
+            : String(bracketData.participants || '').split(' ').filter(Boolean),
+        };
+      }
+    } else {
+      const participants = Array.isArray(bracketData.participants) ? bracketData.participants : [];
+      next.bracket_data = {
+        ...bracketData,
+        participants: participants.map((p, i) =>
+          typeof p === 'string'
+            ? { name: p || `Team ${i + 1}`, score: 0 }
+            : { name: p?.name || `Team ${i + 1}`, score: Number(p?.score || 0) }
+        ),
+      };
+    }
+
+    return next;
+  };
+
   // --- HELPER: GENERATE DYNAMIC BRACKET ---
   const generateInitialBracket = (participantCount, names = []) => {
     const count = parseInt(participantCount) || 2;
@@ -101,7 +139,7 @@ export default function TournamentPage() {
     }
     try {
       const data = await api.getTournaments(selectedEventId);
-      setTournaments(data);
+      setTournaments((data || []).map(normalizeTournament));
       setActiveTournamentId((prevId) => {
         if (!data.length) return null;
         if (prevId && data.some((t) => String(t.id) === String(prevId))) return prevId;
@@ -127,7 +165,7 @@ export default function TournamentPage() {
   }, [selectedEventId]);
 
   const handleEditClick = () => {
-    setEditForm(JSON.parse(JSON.stringify(activeTournament)));
+    setEditForm(JSON.parse(JSON.stringify(normalizeTournament(activeTournament))));
     setIsEditModalOpen(true);
   };
 
@@ -200,6 +238,20 @@ export default function TournamentPage() {
   const handleEditSchedule = (item) => {
     setEditingScheduleId(item.id);
     setScheduleForm({ ...item, session_time: item.session_time?.slice(0,16) || '' });
+  };
+
+  const handleDeleteSchedule = async (id) => {
+    if (!window.confirm('Delete this schedule item?')) return;
+    try {
+      await api.deleteSchedule(id, selectedEventId);
+      await fetchSchedules();
+      if (editingScheduleId === id) {
+        setEditingScheduleId(null);
+        setScheduleForm({ title: '', location: '', session_time: '', status: 'upcoming' });
+      }
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
   if (tournaments.length === 0) {
@@ -303,7 +355,7 @@ export default function TournamentPage() {
                 <h4 style={{ marginBottom: '1rem' }}>Score Entry</h4>
                 
                 {editForm.format === 'bracket' ? (
-                  editForm.bracket_data.rounds.map((round, rIdx) => (
+                  (editForm.bracket_data?.rounds || []).map((round, rIdx) => (
                     <div key={rIdx} style={{ marginBottom: '1.5rem' }}>
                       <div style={{ fontWeight: 800, fontSize: '0.75rem', color: '#64748b' }}>{round.name}</div>
                       {round.matches.map((m, mIdx) => (
@@ -318,7 +370,7 @@ export default function TournamentPage() {
                     </div>
                   ))
                 ) : (
-                  editForm.bracket_data.participants.map((p, i) => (
+                  (editForm.bracket_data?.participants || []).map((p, i) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                       <span>{p.name || p}</span>
                       <input type="number" value={p.score} onChange={e => handleSequentialScoreChange(i, e.target.value)} style={{ width: '80px' }} />
