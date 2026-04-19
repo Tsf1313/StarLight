@@ -182,6 +182,8 @@ export default function TournamentPage() {
   const handleCreateTournament = async (e) => {
     e.preventDefault(); 
     if (!selectedEventId) return alert('Select an event first.');
+    if (!String(tournamentForm.name || '').trim()) return alert('Tournament name is required.');
+    if ((Number(tournamentForm.participants) || 0) < 2) return alert('At least 2 participants are required.');
     
     let bracket_data;
     if (tournamentForm.format === 'bracket') {
@@ -204,9 +206,9 @@ export default function TournamentPage() {
     };
 
     try {
-      await api.createTournament(newTournamentData, selectedEventId);
+      const created = await api.createTournament(newTournamentData, selectedEventId);
       await fetchTournaments();
-      setActiveTournamentId(newTournamentData.id);
+      setActiveTournamentId(created?.id || newTournamentData.id);
       setIsModalOpen(false); 
       setTournamentForm({name: '', participants: '', format: 'bracket', previewType: 'bracket', externalUrl: ''});
     } catch (err) { alert(err.message); }

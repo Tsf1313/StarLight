@@ -2,7 +2,36 @@ import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom'; 
 import { Trophy, ExternalLink } from 'lucide-react'; // Added ExternalLink icon
 import { api } from '../../services/api'; 
-import { guestTournamentData } from '../../data/mockData'; 
+
+const normalizeTournament = (tournament) => {
+  const next = { ...tournament };
+  const bracketData = next?.bracket_data || {};
+
+  if (Array.isArray(bracketData.rounds)) {
+    return next;
+  }
+
+  const matches = bracketData.matches || {};
+  next.bracket_data = {
+    ...bracketData,
+    rounds: [
+      { name: 'Quarter Finals', matches: [{ id: 'r0m0', ...(matches.q1 || { t1: 'TBD', s1: 0, t2: 'TBD', s2: 0 }) }, { id: 'r0m1', ...(matches.q2 || { t1: 'TBD', s1: 0, t2: 'TBD', s2: 0 }) }] },
+      { name: 'Semi Finals', matches: [{ id: 'r1m0', ...(matches.s1 || { t1: 'TBD', s1: 0, t2: 'TBD', s2: 0 }) }] },
+      { name: 'Final', matches: [{ id: 'r2m0', ...(matches.f1 || { t1: 'TBD', s1: 0, t2: 'TBD', s2: 0 }) }] },
+    ],
+  };
+  return next;
+};
+
+const getTopMatch = (tournament) => tournament?.bracket_data?.rounds?.[0]?.matches?.[0] || null;
+
+const buildStandings = (tournament) => {
+  const participants = tournament?.bracket_data?.participants || [];
+  return participants
+    .map((p, i) => (typeof p === 'string' ? { rank: i + 1, name: p, w: 0, l: 0, pts: 0 } : { rank: i + 1, name: p?.name || `Team ${i + 1}`, w: 0, l: 0, pts: Number(p?.score || 0) }))
+    .sort((a, b) => b.pts - a.pts)
+    .map((row, i) => ({ ...row, rank: i + 1 }));
+};
 
 export default function GuestTournamentPage() {
   const [tournaments, setTournaments] = useState([]);
@@ -20,7 +49,7 @@ export default function GuestTournamentPage() {
       ]);
 
       if (tournamentsRes.status === 'fulfilled') {
-        const data = Array.isArray(tournamentsRes.value) ? tournamentsRes.value : [];
+        const data = (Array.isArray(tournamentsRes.value) ? tournamentsRes.value : []).map(normalizeTournament);
         setTournaments(data);
         setActiveTournamentId((prevId) => {
           if (!data.length) return null;
@@ -43,7 +72,8 @@ export default function GuestTournamentPage() {
   }, []);
 
   const activeTournament = tournaments.find(t => t.id === activeTournamentId);
-  const { liveMatch, standings } = guestTournamentData;
+  const topMatch = getTopMatch(activeTournament);
+  const standings = buildStandings(activeTournament);
 
   return (
     <div 
@@ -88,26 +118,26 @@ export default function GuestTournamentPage() {
             </div>
           )}
 
-          {activeTournament?.status === 'Live' && activeTournament.preview_type !== 'external' && activeTournament.bracket_data?.matches?.q1 && (
+          {activeTournament?.status === 'Live' && activeTournament.preview_type !== 'external' && topMatch && (
             <div style={{ marginBottom: '1.5rem' }}>
               <h2 style={{ fontSize: '0.875rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>Current Top Match</h2>
               <div className="hover-lift" style={{ background: 'white', border: `2px solid ${theme?.primary_color || 'var(--color-primary)'}`, borderRadius: '16px', padding: '1.5rem', textAlign: 'center', position: 'relative', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
                  <div style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: theme?.primary_color || 'var(--color-primary)', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '99px', fontSize: '0.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.375rem', border: '2px solid white' }}>
                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'white' }} className="animate-pulse"></div>
-                   LIVE: {liveMatch.round}
+                   LIVE: {activeTournament.bracket_data?.rounds?.[0]?.name || 'Current Match'}
                  </div>
                  
                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginTop: '1rem' }}>
                     <div style={{ flex: 1 }}>
-                      <p style={{ fontWeight: 800, color: '#0f172a', fontSize: '1rem' }}>{activeTournament.bracket_data.matches.q1.t1}</p>
+                      <p style={{ fontWeight: 800, color: '#0f172a', fontSize: '1rem' }}>{topMatch.t1}</p>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                       <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>
-                        {activeTournament.bracket_data.matches.q1.s1}<span style={{ color: '#cbd5e1', margin: '0 0.5rem' }}>-</span>{activeTournament.bracket_data.matches.q1.s2}
+                        {topMatch.s1}<span style={{ color: '#cbd5e1', margin: '0 0.5rem' }}>-</span>{topMatch.s2}
                       </div>
                     </div>
                     <div style={{ flex: 1 }}>
-                      <p style={{ fontWeight: 800, color: '#0f172a', fontSize: '1rem' }}>{activeTournament.bracket_data.matches.q1.t2}</p>
+                      <p style={{ fontWeight: 800, color: '#0f172a', fontSize: '1rem' }}>{topMatch.t2}</p>
                     </div>
                  </div>
               </div>
@@ -167,44 +197,19 @@ export default function GuestTournamentPage() {
               </div>
             ) : (
               <div style={{ background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.25rem', overflowX: 'auto' }}>
-                 <div style={{ display: 'flex', gap: '2rem', alignItems: 'center', minWidth: 'max-content' }}>
-                    
-                    {/* Quarter Finals */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                       <div style={{ fontSize: '0.625rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Quarter Finals</div>
-                       <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', width: '160px', overflow: 'hidden' }}>
-                          <div style={{ padding: '0.5rem 0.75rem', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', fontSize: '0.875rem', fontWeight: 600 }}><span>{activeTournament.bracket_data?.matches?.q1?.t1}</span><span>{activeTournament.bracket_data?.matches?.q1?.s1}</span></div>
-                          <div style={{ padding: '0.5rem 0.75rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', fontWeight: 600 }}><span>{activeTournament.bracket_data?.matches?.q1?.t2}</span><span>{activeTournament.bracket_data?.matches?.q1?.s2}</span></div>
-                       </div>
-                       <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', width: '160px', overflow: 'hidden' }}>
-                          <div style={{ padding: '0.5rem 0.75rem', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', fontSize: '0.875rem', fontWeight: 600 }}><span>{activeTournament.bracket_data?.matches?.q2?.t1}</span><span>{activeTournament.bracket_data?.matches?.q2?.s1}</span></div>
-                          <div style={{ padding: '0.5rem 0.75rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', fontWeight: 600 }}><span>{activeTournament.bracket_data?.matches?.q2?.t2}</span><span>{activeTournament.bracket_data?.matches?.q2?.s2}</span></div>
-                       </div>
+               <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start', minWidth: 'max-content' }}>
+                {(activeTournament.bracket_data?.rounds || []).map((round, rIdx) => (
+                  <div key={rIdx} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                   <div style={{ fontSize: '0.625rem', fontWeight: 800, color: rIdx === (activeTournament.bracket_data.rounds.length - 1) ? (theme?.primary_color || '#f59e0b') : '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{round.name}</div>
+                   {(round.matches || []).map((m, mIdx) => (
+                    <div key={mIdx} style={{ background: 'white', border: rIdx === (activeTournament.bracket_data.rounds.length - 1) ? `2px solid ${theme?.primary_color || '#f59e0b'}` : '1px solid #e2e8f0', borderRadius: '8px', width: '180px', overflow: 'hidden' }}>
+                      <div style={{ padding: '0.5rem 0.75rem', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', fontSize: '0.875rem', fontWeight: Number(m.s1 || 0) > Number(m.s2 || 0) ? 800 : 600 }}><span>{m.t1}</span><span>{m.s1}</span></div>
+                      <div style={{ padding: '0.5rem 0.75rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', fontWeight: Number(m.s2 || 0) > Number(m.s1 || 0) ? 800 : 600 }}><span>{m.t2}</span><span>{m.s2}</span></div>
                     </div>
-                    
-                    {/* Semi Finals */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', position: 'relative' }}>
-                       <div style={{ position: 'absolute', left: '-1rem', top: '35%', width: '1rem', height: '1px', background: '#cbd5e1' }}></div>
-                       <div style={{ position: 'absolute', left: '-1rem', bottom: '35%', width: '1rem', height: '1px', background: '#cbd5e1' }}></div>
-                       <div style={{ position: 'absolute', left: '-1rem', top: '35%', width: '1px', height: '30%', background: '#cbd5e1' }}></div>
-                       
-                       <div style={{ fontSize: '0.625rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Semi Finals</div>
-                       <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', width: '160px', overflow: 'hidden' }}>
-                          <div style={{ padding: '0.5rem 0.75rem', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', fontSize: '0.875rem', fontWeight: 600 }}><span>{activeTournament.bracket_data?.matches?.s1?.t1}</span><span>{activeTournament.bracket_data?.matches?.s1?.s1}</span></div>
-                          <div style={{ padding: '0.5rem 0.75rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', fontWeight: 600 }}><span>{activeTournament.bracket_data?.matches?.s1?.t2}</span><span>{activeTournament.bracket_data?.matches?.s1?.s2}</span></div>
-                       </div>
-                    </div>
-
-                    {/* Final */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', position: 'relative' }}>
-                       <div style={{ position: 'absolute', left: '-1rem', top: '55%', width: '1rem', height: '1px', background: '#cbd5e1' }}></div>
-                       <div style={{ fontSize: '0.625rem', fontWeight: 800, color: theme?.primary_color || '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Final</div>
-                       <div style={{ background: 'white', border: `2px solid ${theme?.primary_color || '#f59e0b'}`, borderRadius: '8px', width: '160px', overflow: 'hidden' }}>
-                          <div style={{ padding: '0.5rem 0.75rem', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #fef3c7', fontSize: '0.875rem', fontWeight: 800, background: `${theme?.primary_color || '#f59e0b'}15` }}><span>{activeTournament.bracket_data?.matches?.f1?.t1}</span><span>{activeTournament.bracket_data?.matches?.f1?.s1}</span></div>
-                          <div style={{ padding: '0.5rem 0.75rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', fontWeight: 600 }}><span>{activeTournament.bracket_data?.matches?.f1?.t2}</span><span>{activeTournament.bracket_data?.matches?.f1?.s2}</span></div>
-                       </div>
-                    </div>
-                 </div>
+                   ))}
+                  </div>
+                ))}
+               </div>
             </div>
             )
           )}

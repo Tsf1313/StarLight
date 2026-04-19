@@ -22,44 +22,44 @@ export default {
 
     try {
       // Route matching
-      if (pathname === '/api/auth/login') return handleAuthLogin(request, env);
-      if (pathname === '/api/auth/register') return handleAuthRegister(request, env);
-      if (pathname === '/api/events/current-for-guests' && method === 'GET') return handleGetCurrentEventForGuests(request, env);
-      if (pathname === '/api/events/current-for-guests' && method === 'PUT') return handleSetCurrentEventForGuests(request, env);
-      if (pathname === '/api/events' && method === 'GET') return handleGetEvents(request, env);
-      if (pathname === '/api/events' && method === 'POST') return handleCreateEvent(request, env);
-      if (pathname.match(/^\/api\/events\/[^/]+$/) && method === 'PUT') return handleUpdateEvent(request, env, pathname);
-      if (pathname.match(/^\/api\/events\/[^/]+$/) && method === 'DELETE') return handleDeleteEvent(request, env, pathname);
-      if (pathname === '/api/dashboard/customize' && method === 'GET') return handleGetCustomize(request, env);
-      if (pathname === '/api/dashboard/customize' && method === 'PUT') return handlePutCustomize(request, env);
-      if (pathname === '/api/dashboard/feedback-form') return handleGetFeedbackForm(request, env);
-      if (pathname === '/api/dashboard/attendance' && method === 'GET') return handleGetAttendance(request, env);
-      if (pathname === '/api/dashboard/attendance' && method === 'POST') return handleCreateAttendee(request, env);
-      if (pathname.match(/^\/api\/dashboard\/attendance\/[^/]+$/) && method === 'PATCH') return handlePatchAttendee(request, env, pathname);
-      if (pathname.match(/^\/api\/dashboard\/attendance\/[^/]+$/) && method === 'PUT') return handleUpdateAttendee(request, env, pathname);
-      if (pathname === '/api/dashboard/tournaments' && method === 'GET') return handleGetTournaments(request, env);
-      if (pathname === '/api/dashboard/tournaments' && method === 'POST') return handleCreateTournament(request, env);
-      if (pathname.match(/^\/api\/dashboard\/tournaments\/[^/]+$/) && method === 'PUT') return handleUpdateTournament(request, env, pathname);
-      if (pathname.match(/^\/api\/dashboard\/tournaments\/[^/]+$/) && method === 'DELETE') return handleDeleteTournament(request, env, pathname);
-      if (pathname === '/api/dashboard/schedules' && method === 'GET') return handleGetSchedules(request, env);
-      if (pathname === '/api/dashboard/schedules' && method === 'POST') return handleCreateSchedule(request, env);
-      if (pathname.match(/^\/api\/dashboard\/schedules\/[^/]+$/) && method === 'PUT') return handleUpdateSchedule(request, env, pathname);
-      if (pathname.match(/^\/api\/dashboard\/schedules\/[^/]+$/) && method === 'DELETE') return handleDeleteSchedule(request, env, pathname);
-      if (pathname === '/api/dashboard/brochure' && method === 'GET') return handleGetBrochures(request, env);
-      if (pathname === '/api/dashboard/brochure/replace' && method === 'PUT') return handleReplaceBrochures(request, env);
-      if (pathname === '/api/dashboard/venue-maps' && method === 'GET') return handleGetVenueMaps(request, env);
-      if (pathname === '/api/dashboard/venue-maps/replace' && method === 'PUT') return handleReplaceVenueMaps(request, env);
-      if (pathname === '/api/dashboard/announcements' && method === 'GET') return handleGetAnnouncements(request, env);
-      if (pathname === '/api/dashboard/announcements/replace' && method === 'PUT') return handleReplaceAnnouncements(request, env);
-      if (pathname === '/api/guest/schedule') return handleGuestGetSchedule(request, env);
-      if (pathname === '/api/guest/announcements') return handleGuestGetAnnouncements(request, env);
-      if (pathname === '/api/guest/brochure') return handleGuestGetBrochures(request, env);
-      if (pathname === '/api/guest/venue-maps') return handleGuestGetVenueMaps(request, env);
-      if (pathname === '/api/guest/tournaments') return handleGuestGetTournaments(request, env);
-      if (pathname === '/api/guest/feedback' && method === 'POST') return handleGuestFeedback(request, env);
-      if (pathname === '/api/dashboard/activity') return handleGetActivity(request, env);
-      if (pathname === '/api/upload' && method === 'POST') return handleFileUpload(request, env);
-      if (pathname.match(/^\/files\/.+$/) && method === 'GET') return handleServeFile(request, env, pathname);
+      if (pathname === '/api/auth/login') return await handleAuthLogin(request, env);
+      if (pathname === '/api/auth/register') return await handleAuthRegister(request, env);
+      if (pathname === '/api/events/current-for-guests' && method === 'GET') return await handleGetCurrentEventForGuests(request, env);
+      if (pathname === '/api/events/current-for-guests' && method === 'PUT') return await handleSetCurrentEventForGuests(request, env);
+      if (pathname === '/api/events' && method === 'GET') return await handleGetEvents(request, env);
+      if (pathname === '/api/events' && method === 'POST') return await handleCreateEvent(request, env);
+      if (pathname.match(/^\/api\/events\/[^/]+$/) && method === 'PUT') return await handleUpdateEvent(request, env, pathname);
+      if (pathname.match(/^\/api\/events\/[^/]+$/) && method === 'DELETE') return await handleDeleteEvent(request, env, pathname);
+      if (pathname === '/api/dashboard/customize' && method === 'GET') return await handleGetCustomize(request, env);
+      if (pathname === '/api/dashboard/customize' && method === 'PUT') return await handlePutCustomize(request, env);
+      if (pathname === '/api/dashboard/feedback-form') return await handleGetFeedbackForm(request, env);
+      if (pathname === '/api/dashboard/attendance' && method === 'GET') return await handleGetAttendance(request, env);
+      if (pathname === '/api/dashboard/attendance' && method === 'POST') return await handleCreateAttendee(request, env);
+      if (pathname.match(/^\/api\/dashboard\/attendance\/[^/]+$/) && method === 'PATCH') return await handlePatchAttendee(request, env, pathname);
+      if (pathname.match(/^\/api\/dashboard\/attendance\/[^/]+$/) && method === 'PUT') return await handleUpdateAttendee(request, env, pathname);
+      if (pathname === '/api/dashboard/tournaments' && method === 'GET') return await handleGetTournaments(request, env);
+      if (pathname === '/api/dashboard/tournaments' && method === 'POST') return await handleCreateTournament(request, env);
+      if (pathname.match(/^\/api\/dashboard\/tournaments\/[^/]+$/) && method === 'PUT') return await handleUpdateTournament(request, env, pathname);
+      if (pathname.match(/^\/api\/dashboard\/tournaments\/[^/]+$/) && method === 'DELETE') return await handleDeleteTournament(request, env, pathname);
+      if (pathname === '/api/dashboard/schedules' && method === 'GET') return await handleGetSchedules(request, env);
+      if (pathname === '/api/dashboard/schedules' && method === 'POST') return await handleCreateSchedule(request, env);
+      if (pathname.match(/^\/api\/dashboard\/schedules\/[^/]+$/) && method === 'PUT') return await handleUpdateSchedule(request, env, pathname);
+      if (pathname.match(/^\/api\/dashboard\/schedules\/[^/]+$/) && method === 'DELETE') return await handleDeleteSchedule(request, env, pathname);
+      if (pathname === '/api/dashboard/brochure' && method === 'GET') return await handleGetBrochures(request, env);
+      if (pathname === '/api/dashboard/brochure/replace' && method === 'PUT') return await handleReplaceBrochures(request, env);
+      if (pathname === '/api/dashboard/venue-maps' && method === 'GET') return await handleGetVenueMaps(request, env);
+      if (pathname === '/api/dashboard/venue-maps/replace' && method === 'PUT') return await handleReplaceVenueMaps(request, env);
+      if (pathname === '/api/dashboard/announcements' && method === 'GET') return await handleGetAnnouncements(request, env);
+      if (pathname === '/api/dashboard/announcements/replace' && method === 'PUT') return await handleReplaceAnnouncements(request, env);
+      if (pathname === '/api/guest/schedule') return await handleGuestGetSchedule(request, env);
+      if (pathname === '/api/guest/announcements') return await handleGuestGetAnnouncements(request, env);
+      if (pathname === '/api/guest/brochure') return await handleGuestGetBrochures(request, env);
+      if (pathname === '/api/guest/venue-maps') return await handleGuestGetVenueMaps(request, env);
+      if (pathname === '/api/guest/tournaments') return await handleGuestGetTournaments(request, env);
+      if (pathname === '/api/guest/feedback' && method === 'POST') return await handleGuestFeedback(request, env);
+      if (pathname === '/api/dashboard/activity') return await handleGetActivity(request, env);
+      if (pathname === '/api/upload' && method === 'POST') return await handleFileUpload(request, env);
+      if (pathname.match(/^\/files\/.+$/) && method === 'GET') return await handleServeFile(request, env, pathname);
 
       return jsonResponse({ error: 'Not Found' }, 404);
     } catch (error) {
@@ -507,7 +507,8 @@ async function handleReplaceAnnouncements(request, env) {
 // ==========================================
 
 async function handleGuestGetSchedule(request, env) {
-  const data = await parseJson(request);
+  const eventId = await getCurrentEventForGuests(env);
+  if (!eventId) return jsonResponse([]);
   const schedules = await dbQuery(env.DB, 'SELECT * FROM schedules WHERE event_id = ? ORDER BY session_time ASC', [eventId]);
   return jsonResponse(schedules.results || []);
 }

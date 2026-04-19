@@ -59,8 +59,14 @@ const parseResponse = async (response) => {
 };
 
 const fetchWithHandler = async (url, options = {}) => {
+  const method = (options?.method || 'GET').toUpperCase();
+  const requestOptions =
+    method === 'GET'
+      ? { cache: 'no-store', ...options }
+      : options;
+
   try {
-    const response = await fetch(url, options);
+    const response = await fetch(url, requestOptions);
     return await parseResponse(response);
   } catch (error) {
     const isNetworkError =
@@ -84,7 +90,7 @@ const fetchWithHandler = async (url, options = {}) => {
     }
 
     try {
-      const fallbackResponse = await fetch(fallbackUrl, options);
+      const fallbackResponse = await fetch(fallbackUrl, requestOptions);
       return await parseResponse(fallbackResponse);
     } catch {
       // Keep the original primary error so HTTP/API errors are not masked.
