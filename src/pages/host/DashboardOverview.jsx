@@ -27,7 +27,7 @@ export default function DashboardOverview() {
     status: 'Upcoming'
   });
 
-  const currentEvent = eventsList.find((e) => e.id === selectedEventId) || eventsList[0];
+  const currentEvent = eventsList.find((e) => e.id === selectedEventId) || eventsList[0] || null;
 
    useEffect(() => {
     const loadEvents = async () => {
@@ -293,19 +293,19 @@ export default function DashboardOverview() {
       
       {/* Top Stats - Active Event Focus */}
       <div style={{ background: 'white', padding: '1rem', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-         <h2 style={{ fontSize: '1.125rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-            <Calendar size={18} color="var(--color-primary)" /> {currentEvent.title} Metrics
-         </h2>
-         <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-primary)' }}>{currentEvent.status}</span>
+        <h2 style={{ fontSize: '1.125rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+          <Calendar size={18} color="var(--color-primary)" /> {currentEvent ? `${currentEvent.title} Metrics` : 'No Event Metrics'}
+        </h2>
+        <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-primary)' }}>{currentEvent?.status || 'Inactive'}</span>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
          {/* Stat Cards */}
          {[
-           { label: 'Total Attendance', val: currentEvent.metrics?.attendance || 0, icon: Users, color: '#3b82f6', bg: '#eff6ff' },
-           { label: 'Tournament Engaged', val: currentEvent.metrics?.tournament || 0, icon: TrendingUp, color: '#10b981', bg: '#ecfdf5' },
-           { label: 'Brochure Views', val: currentEvent.metrics?.brochure || 0, icon: BookOpen, color: '#8b5cf6', bg: '#f5f3ff' },
-           { label: 'Map Interactions', val: currentEvent.metrics?.map || 0, icon: Map, color: '#f59e0b', bg: '#fffbeb' }
+           { label: 'Total Attendance', val: currentEvent?.metrics?.attendance || 0, icon: Users, color: '#3b82f6', bg: '#eff6ff' },
+           { label: 'Tournament Engaged', val: currentEvent?.metrics?.tournament || 0, icon: TrendingUp, color: '#10b981', bg: '#ecfdf5' },
+           { label: 'Brochure Views', val: currentEvent?.metrics?.brochure || 0, icon: BookOpen, color: '#8b5cf6', bg: '#f5f3ff' },
+           { label: 'Map Interactions', val: currentEvent?.metrics?.map || 0, icon: Map, color: '#f59e0b', bg: '#fffbeb' }
          ].map((stat, i) => (
            <div key={i} className="hover-lift" style={{ background: 'white', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
               <div>

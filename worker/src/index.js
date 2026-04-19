@@ -24,6 +24,8 @@ export default {
       // Route matching
       if (pathname === '/api/auth/login') return handleAuthLogin(request, env);
       if (pathname === '/api/auth/register') return handleAuthRegister(request, env);
+      if (pathname === '/api/events/current-for-guests' && method === 'GET') return handleGetCurrentEventForGuests(request, env);
+      if (pathname === '/api/events/current-for-guests' && method === 'PUT') return handleSetCurrentEventForGuests(request, env);
       if (pathname === '/api/events' && method === 'GET') return handleGetEvents(request, env);
       if (pathname === '/api/events' && method === 'POST') return handleCreateEvent(request, env);
       if (pathname.match(/^\/api\/events\/[^/]+$/) && method === 'PUT') return handleUpdateEvent(request, env, pathname);
@@ -55,8 +57,6 @@ export default {
       if (pathname === '/api/guest/tournaments') return handleGuestGetTournaments(request, env);
       if (pathname === '/api/guest/feedback' && method === 'POST') return handleGuestFeedback(request, env);
       if (pathname === '/api/dashboard/activity') return handleGetActivity(request, env);
-      if (pathname === '/api/events/current-for-guests' && method === 'GET') return handleGetCurrentEventForGuests(request, env);
-      if (pathname === '/api/events/current-for-guests' && method === 'PUT') return handleSetCurrentEventForGuests(request, env);
       if (pathname === '/api/upload' && method === 'POST') return handleFileUpload(request, env);
 
       return jsonResponse({ error: 'Not Found' }, 404);
@@ -212,6 +212,7 @@ async function handleDeleteEvent(request, env, pathname) {
 
   // Use a transaction-like approach: delete cascade
   const deletes = [
+    ['DELETE FROM event_settings WHERE event_id = ?', [eventId]],
     ['DELETE FROM attendees WHERE event_id = ?', [eventId]],
     ['DELETE FROM tournaments WHERE event_id = ?', [eventId]],
     ['DELETE FROM brochures WHERE event_id = ?', [eventId]],

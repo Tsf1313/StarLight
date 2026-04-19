@@ -31,6 +31,12 @@ export default function TournamentPage() {
 
   // 1. Fetch Tournaments on Load
   const fetchTournaments = async () => {
+    if (!selectedEventId) {
+      setTournaments([]);
+      setActiveTournamentId(null);
+      return;
+    }
+
     try {
       const data = await api.getTournaments(selectedEventId);
       setTournaments(data);
@@ -43,6 +49,11 @@ export default function TournamentPage() {
   };
 
   const fetchSchedules = async () => {
+    if (!selectedEventId) {
+      setScheduleItems([]);
+      return;
+    }
+
     try {
       const data = await api.getSchedules(selectedEventId);
       setScheduleItems(data);
@@ -89,6 +100,11 @@ export default function TournamentPage() {
   // 4. Handle Creating a New Tournament
   const handleCreateTournament = async (e) => {
     e.preventDefault(); 
+
+    if (!selectedEventId) {
+      alert('Please create and select an event before creating tournaments.');
+      return;
+    }
     
     // Construct the new tournament object matching our database schema
     const newTournamentData = {
@@ -125,6 +141,10 @@ export default function TournamentPage() {
 
   const handleSaveSchedule = async (e) => {
     e.preventDefault();
+    if (!selectedEventId) {
+      alert('Please create and select an event first.');
+      return;
+    }
     try {
       const payload = {
         id: editingScheduleId || `sc_${Date.now()}`,
