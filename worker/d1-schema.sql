@@ -119,4 +119,5 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- Insert default event settings if not exist
-INSERT OR IGNORE INTO event_settings (id, event_id) VALUES ('set_001', 'e_001');
+-- Note: This requires an event with id 'e_001' to exist first
+-- INSERT OR IGNORE INTO event_settings (id, event_id) VALUES ('set_001', 'e_001');

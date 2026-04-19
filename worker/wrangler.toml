@@ -6,7 +6,7 @@ compatibility_date = "2024-01-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "eventflow-prod"
-database_id = "your-database-id-here"  # You'll get this after creating D1
+database_id = "c86cee4a-71e7-4f51-9ee5-c10828d4e886"
 
 # R2 Bucket (Object Storage)
 [[r2_buckets]]
@@ -16,7 +16,7 @@ bucket_name = "eventflow-uploads"
 # KV Namespace (Session/State Storage - for current event, etc.)
 [[kv_namespaces]]
 binding = "KV"
-id = "your-kv-namespace-id-here"  # Create via wrangler: wrangler kv:namespace create eventflow-state
+id = "f06b9d4ace1743498f1235fe9feca89e"
 
 # Environment Variables
 [env.production]
