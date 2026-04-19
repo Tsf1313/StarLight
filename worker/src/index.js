@@ -98,7 +98,8 @@ async function dbQuery(db, query, params = []) {
   try {
     const stmt = db.prepare(query);
     if (params.length > 0) {
-      return await stmt.bind(...params).all();
+      const safeParams = params.map(p => p === undefined ? null : p);
+      return await stmt.bind(...safeParams).all();
     }
     return await stmt.all();
   } catch (error) {
@@ -111,7 +112,8 @@ async function dbRun(db, query, params = []) {
   try {
     const stmt = db.prepare(query);
     if (params.length > 0) {
-      return await stmt.bind(...params).run();
+      const safeParams = params.map(p => p === undefined ? null : p);
+      return await stmt.bind(...safeParams).run();
     }
     return await stmt.run();
   } catch (error) {

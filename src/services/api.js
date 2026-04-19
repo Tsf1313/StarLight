@@ -1,8 +1,9 @@
 // src/services/api.js
 
-const API_BASE_URL = import.meta.env.VITE_API_URL
-  ? `${import.meta.env.VITE_API_URL}/api`
-  : 'http://localhost:3000/api';
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_BASE_URL = isLocal 
+  ? 'http://localhost:3000/api' 
+  : 'https://api.eventflow.hamstersame.org/api';
 
 // Helper function to handle fetch responses and errors cleanly
 const fetchWithHandler = async (url, options = {}) => {
