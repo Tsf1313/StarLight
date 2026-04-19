@@ -8,14 +8,19 @@ export default function GuestTournamentPage() {
   const [tournaments, setTournaments] = useState([]);
   const [activeTournamentId, setActiveTournamentId] = useState(null);
   const [activeTab, setActiveTab] = useState('bracket');
+  const [schedule, setSchedule] = useState([]);
   
   const { theme } = useOutletContext();
 
   useEffect(() => {
     const fetchTournaments = async () => {
       try {
-        const data = await api.getTournaments();
+        const [data, scheduleRows] = await Promise.all([
+          api.getGuestTournaments(),
+          api.getGuestSchedule(),
+        ]);
         setTournaments(data);
+        setSchedule(scheduleRows);
         if (data.length > 0 && !activeTournamentId) {
           setActiveTournamentId(data[0].id);
         }
@@ -24,6 +29,8 @@ export default function GuestTournamentPage() {
       }
     };
     fetchTournaments();
+    const intervalId = setInterval(fetchTournaments, 5000);
+    return () => clearInterval(intervalId);
   }, []);
 
   const activeTournament = tournaments.find(t => t.id === activeTournamentId);
@@ -113,6 +120,13 @@ export default function GuestTournamentPage() {
                 style={{ flex: 1, padding: '0.625rem', background: activeTab === 'standings' ? 'white' : 'transparent', borderRadius: '8px', fontWeight: activeTab === 'standings' ? 700 : 600, color: activeTab === 'standings' ? (theme?.primary_color || 'var(--color-primary-dark)') : '#64748b', boxShadow: activeTab === 'standings' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none', transition: 'all 0.2s' }}
              >
                 Standings
+             </button>
+             <button 
+               onClick={() => setActiveTab('schedule')}
+               className="scale-btn" 
+               style={{ flex: 1, padding: '0.625rem', background: activeTab === 'schedule' ? 'white' : 'transparent', borderRadius: '8px', fontWeight: activeTab === 'schedule' ? 700 : 600, color: activeTab === 'schedule' ? (theme?.primary_color || 'var(--color-primary-dark)') : '#64748b', boxShadow: activeTab === 'schedule' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none', transition: 'all 0.2s' }}
+             >
+               Schedule
              </button>
           </div>
 
@@ -231,6 +245,21 @@ export default function GuestTournamentPage() {
                  </table>
               </div>
             )
+          )}
+
+          {activeTab === 'schedule' && (
+            <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {schedule.length === 0 ? (
+                <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1rem', color: '#64748b' }}>No schedule available for this event.</div>
+              ) : (
+                schedule.map((item) => (
+                  <div key={item.id} style={{ background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1rem' }}>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0f172a' }}>{item.title}</div>
+                    <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.25rem' }}>{item.location || '-'} | {item.time}</div>
+                  </div>
+                ))
+              )}
+            </div>
           )}
         </>
       )}

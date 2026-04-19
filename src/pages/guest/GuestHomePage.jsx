@@ -1,12 +1,45 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom'; // NEW: Hook to catch the theme
 import { Trophy, BookOpen, Map, Share2, AlertCircle, Clock } from 'lucide-react';
 import AdBanner from '../../components/ui/AdBanner';
 import { guestAnnouncements, guestSchedule } from '../../data/mockData';
+import { api } from '../../services/api';
 
 export default function GuestHomePage() {
   // Catch the custom theme passed down from GuestLayout
   const { theme } = useOutletContext(); 
+   const [announcements, setAnnouncements] = useState(guestAnnouncements);
+   const [schedule, setSchedule] = useState(guestSchedule);
+   const [guestEvent, setGuestEvent] = useState(null);
+
+   useEffect(() => {
+      const loadGuestHomeData = async () => {
+         try {
+            const [announcementRows, scheduleRows] = await Promise.all([
+               api.getGuestAnnouncements(),
+               api.getGuestSchedule(),
+            ]);
+
+                  const guestEventData = await api.getSelectedEventForGuests();
+                  if (guestEventData?.event) {
+                     setGuestEvent(guestEventData.event);
+                  }
+
+            if (announcementRows.length) {
+               setAnnouncements(announcementRows);
+            }
+            if (scheduleRows.length) {
+               setSchedule(scheduleRows);
+            }
+         } catch (error) {
+            console.error('Failed to load guest home data:', error);
+         }
+      };
+
+      loadGuestHomeData();
+      const intervalId = setInterval(loadGuestHomeData, 5000);
+      return () => clearInterval(intervalId);
+   }, []);
 
   return (
     <div 
@@ -24,8 +57,8 @@ export default function GuestHomePage() {
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', background: 'var(--color-success)', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '99px', fontSize: '0.75rem', fontWeight: 700, marginBottom: '1rem' }}>
            <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'white' }} className="animate-pulse"></div> Live Now
         </div>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem', letterSpacing: '-0.025em' }}>Tech Summit 2026</h1>
-        <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.8)' }}>Feb 25-27, 2026<br/>Convention Center</p>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem', letterSpacing: '-0.025em' }}>{guestEvent?.title || 'Tech Summit 2026'}</h1>
+        <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.8)' }}>{guestEvent?.date_range || 'Feb 25-27, 2026'}<br/>{guestEvent?.location || 'Convention Center'}</p>
       </div>
 
       {/* Ad Space */}
@@ -37,7 +70,7 @@ export default function GuestHomePage() {
             <AlertCircle size={20} color="var(--color-warning)" /> Announcements
          </h2>
          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {guestAnnouncements.map((ann) => (
+            {announcements.map((ann) => (
                <div key={ann.id} style={{ background: ann.isUrgent ? '#fef2f2' : 'white', borderLeft: `4px solid ${ann.isUrgent ? 'var(--color-danger)' : (theme?.primary_color || 'var(--color-primary-light)')}`, padding: '1rem', borderRadius: '0 8px 8px 0', borderTop: '1px solid #e2e8f0', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0', borderLeftWidth: '4px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
                   <p style={{ fontWeight: 600, color: ann.isUrgent ? '#991b1b' : 'var(--color-text-main)', fontSize: '0.875rem' }}>{ann.message}</p>
                   <span style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem', display: 'block' }}>{ann.time}</span>
@@ -56,7 +89,7 @@ export default function GuestHomePage() {
             <div style={{ position: 'absolute', left: '1.3rem', top: '0.5rem', bottom: '1rem', width: '2px', background: '#e2e8f0', zIndex: 0 }}></div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', position: 'relative', zIndex: 1 }}>
-               {guestSchedule.slice(0, 4).map((sch) => {
+               {schedule.slice(0, 4).map((sch) => {
                  const isPast = sch.status === 'completed';
                  const isActive = sch.status === 'active';
                  

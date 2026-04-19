@@ -1,5 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
+// Contexts
+import { EventProvider } from './contexts/EventContext';
+
 // Layouts (TBD)
 import HostLayout from './components/host/HostLayout';
 import GuestLayout from './components/guest/GuestLayout';
@@ -27,37 +30,39 @@ import GuestFeedbackPage from './pages/guest/GuestFeedbackPage';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+    <EventProvider>
+      <Router>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
 
-        {/* Host Dashboard Routes */}
-        <Route path="/dashboard/*" element={<HostLayout />}>
-          <Route index element={<DashboardOverview />} />
-          <Route path="attendance" element={<AttendancePage />} />
-          <Route path="tournament" element={<TournamentPage />} />
-          <Route path="brochure" element={<BrochurePage />} />
-          <Route path="venue-map" element={<VenueMapPage />} />
-          <Route path="customize" element={<CustomizePage />} />
-          <Route path="feedback" element={<FeedbackPage />} />
-        </Route>
+          {/* Host Dashboard Routes */}
+          <Route path="/dashboard/*" element={<HostLayout />}>
+            <Route index element={<DashboardOverview />} />
+            <Route path="attendance" element={<AttendancePage />} />
+            <Route path="tournament" element={<TournamentPage />} />
+            <Route path="brochure" element={<BrochurePage />} />
+            <Route path="venue-map" element={<VenueMapPage />} />
+            <Route path="customize" element={<CustomizePage />} />
+            <Route path="feedback" element={<FeedbackPage />} />
+          </Route>
 
-        {/* Guest App Routes */}
-        <Route path="/guest/*" element={<GuestLayout />}>
-          <Route index element={<GuestHomePage />} />
-          <Route path="brochure" element={<GuestBrochurePage />} />
-          <Route path="map" element={<GuestVenueMapPage />} />
-          <Route path="tournament" element={<GuestTournamentPage />} />
-          <Route path="feedback" element={<GuestFeedbackPage />} />
-        </Route>
+          {/* Guest App Routes */}
+          <Route path="/guest/*" element={<GuestLayout />}>
+            <Route index element={<GuestHomePage />} />
+            <Route path="brochure" element={<GuestBrochurePage />} />
+            <Route path="map" element={<GuestVenueMapPage />} />
+            <Route path="tournament" element={<GuestTournamentPage />} />
+            <Route path="feedback" element={<GuestFeedbackPage />} />
+          </Route>
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Router>
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </EventProvider>
   );
 }
 

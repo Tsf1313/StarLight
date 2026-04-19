@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
+import { useEffect } from 'react';
 import { Outlet, NavLink, Link } from 'react-router-dom';
 import { LayoutDashboard, Users, Trophy, BookOpen, Map as MapIcon, Paintbrush, MessageCircle, Share2, LogOut, Bell, Search, Hexagon, CheckCircle2 } from 'lucide-react';
 import styles from '../../styles/Host.module.css';
+import { useEventContext } from '../../contexts/EventContext';
+import { api } from '../../services/api';
 
 const sidebarLinks = [
-  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { path: '/dashboard/attendance', label: 'Attendance', icon: Users },
   { path: '/dashboard/tournament', label: 'Tournament', icon: Trophy },
   { path: '/dashboard/brochure', label: 'Brochure', icon: BookOpen },
@@ -14,9 +17,25 @@ const sidebarLinks = [
 ];
 
 export default function HostLayout() {
+  const { selectedEventId } = useEventContext();
   const [downloadingQR, setDownloadingQR] = useState(false);
   const [downloadedQR, setDownloadedQR] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+
+  useEffect(() => {
+    const loadSelectedEvent = async () => {
+      try {
+        const events = await api.getEvents();
+        const found = events.find((ev) => ev.id === selectedEventId) || events[0] || null;
+        setSelectedEvent(found);
+      } catch (error) {
+        console.error('Failed to load selected event in host layout:', error);
+      }
+    };
+
+    loadSelectedEvent();
+  }, [selectedEventId]);
 
   const handleDownloadQR = () => {
     setDownloadingQR(true);
@@ -41,10 +60,10 @@ export default function HostLayout() {
 
         <div className={styles.currentEvent}>
           <div className={styles.currentEventLabel}>CURRENT EVENT</div>
-          <div className={styles.currentEventName}>Tech Summit 2026</div>
+          <div className={styles.currentEventName}>{selectedEvent?.title || 'No Event Selected'}</div>
           <div className={styles.statusIndicator}>
             <div className={styles.statusDot}></div>
-            Active
+            {selectedEvent?.status || 'Inactive'}
           </div>
         </div>
 
@@ -55,6 +74,7 @@ export default function HostLayout() {
               <NavLink 
                 key={link.path} 
                 to={link.path}
+                end={Boolean(link.exact)}
                 className="hover-lift scale-btn"
                 style={({ isActive }) => ({
                   display: 'flex',

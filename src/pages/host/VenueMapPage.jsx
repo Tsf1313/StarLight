@@ -1,30 +1,62 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Plus, Trash2, Map as MapIcon, Image as ImageIcon, MapPin, CheckCircle2, Edit3, X } from 'lucide-react';
-import { initialMaps } from '../../data/mockData';
+import { api } from '../../services/api';
+import { useEventContext } from '../../contexts/EventContext';
 
 export default function VenueMapPage() {
+  const { selectedEventId } = useEventContext();
   const [isPublishing, setIsPublishing] = useState(false);
   const [published, setPublished] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const colors = ['#3b82f6', '#f59e0b', '#10b981', '#64748b', '#ef4444', '#8b5cf6'];
 
-  const [maps, setMaps] = useState(initialMaps);
-  const [activeMapId, setActiveMapId] = useState(1);
+  const [maps, setMaps] = useState([]);
+  const [activeMapId, setActiveMapId] = useState(null);
   const [editingMapNameId, setEditingMapNameId] = useState(null);
 
   const activeMap = maps.find(m => m.id === activeMapId) || maps[0];
 
-  const handlePublish = () => {
+  const loadVenueMaps = async (eventId) => {
+    try {
+      const data = await api.getVenueMaps(eventId);
+      const nextMaps = data || [];
+      setMaps(nextMaps);
+      if (nextMaps.length > 0) {
+        setActiveMapId(nextMaps[0].id);
+      } else {
+        const starterId = `${eventId || 'e_001'}_map_${Date.now()}`;
+        setMaps([{ id: starterId, name: 'Floor 1', image: null, zones: [], activeZoneId: null }]);
+        setActiveMapId(starterId);
+      }
+    } catch (error) {
+      console.error('Failed to load venue maps:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    setIsLoading(true);
+    loadVenueMaps(selectedEventId);
+  }, [selectedEventId]);
+
+  const handlePublish = async () => {
     setIsPublishing(true);
-    setTimeout(() => {
-      setIsPublishing(false);
+    try {
+      await api.replaceVenueMaps(maps, selectedEventId);
       setPublished(true);
       setTimeout(() => setPublished(false), 3000);
-    }, 1500);
+      await loadVenueMaps(selectedEventId);
+    } catch (error) {
+      alert('Failed to publish venue maps: ' + error.message);
+    } finally {
+      setIsPublishing(false);
+    }
   };
 
   const addMap = () => {
-    const newMapId = Date.now();
+    const newMapId = `${selectedEventId || 'e_001'}_map_${Date.now()}`;
     setMaps([...maps, {
       id: newMapId,
       name: `Floor ${maps.length + 1}`,
@@ -48,12 +80,29 @@ export default function VenueMapPage() {
     if (activeMapId === id) setActiveMapId(newMaps[0].id);
   };
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     if (e.target.files && e.target.files[0]) {
-      const url = URL.createObjectURL(e.target.files[0]);
+      let url = '';
+      try {
+        const uploadResult = await api.uploadImage(e.target.files[0]);
+        url = uploadResult.url;
+      } catch (error) {
+        alert('Failed to upload floorplan image: ' + error.message);
+        return;
+      }
       setMaps(maps.map(m => m.id === activeMapId ? { ...m, image: url } : m));
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="animate-fade-in" style={{ maxWidth: '1400px', margin: '0 auto' }}>
+        <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '2rem', textAlign: 'center', color: '#64748b' }}>
+          Loading venue maps...
+        </div>
+      </div>
+    );
+  }
 
   const addZone = () => {
     const newZoneId = Date.now();

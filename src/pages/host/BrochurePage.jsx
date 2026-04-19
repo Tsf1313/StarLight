@@ -1,21 +1,71 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { GripVertical, Trash2, FileUp, Download, FileText, ChevronDown, Eye, CheckCircle2, MessageSquare, Plus } from 'lucide-react';
 import { initialFiles } from '../../data/mockData';
+import { api } from '../../services/api';
+import { useEventContext } from '../../contexts/EventContext';
+
 export default function BrochurePage() {
+  const { selectedEventId } = useEventContext();
   const [isPublishing, setIsPublishing] = useState(false);
   const [published, setPublished] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [announcements, setAnnouncements] = useState([
     { id: 1, text: 'Welcome to our flagship event! Check below for relevant files and schedules.', isPublished: true }
   ]);
 
-  const handlePublish = () => {
+  const loadBrochureData = async (eventId) => {
+    try {
+      const [brochureRows, announcementRows] = await Promise.all([
+        api.getBrochures(eventId),
+        api.getDashboardAnnouncements(eventId),
+      ]);
+
+      setFiles(brochureRows.length ? brochureRows : initialFiles);
+
+      if (announcementRows.length) {
+        setAnnouncements(
+          announcementRows.map((item) => ({
+            id: item.id,
+            text: item.message,
+            isPublished: true,
+          }))
+        );
+      }
+    } catch (error) {
+      console.error('Failed to load brochure data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    setIsLoading(true);
+    loadBrochureData(selectedEventId);
+  }, [selectedEventId]);
+
+  const handlePublish = async () => {
     setIsPublishing(true);
-    setTimeout(() => {
-      setIsPublishing(false);
+    try {
+      await api.replaceBrochures(files, selectedEventId);
+      await api.replaceDashboardAnnouncements(
+        announcements
+          .filter((item) => item.isPublished && item.text.trim())
+          .map((item) => ({
+            id: item.id,
+            message: item.text,
+            isUrgent: false,
+          })),
+        selectedEventId
+      );
       setPublished(true);
       setTimeout(() => setPublished(false), 3000);
-    }, 1500);
+      await loadBrochureData(selectedEventId);
+    } catch (error) {
+      alert('Failed to publish brochure content: ' + error.message);
+    } finally {
+      setIsPublishing(false);
+    }
   };
 
   const addAnnouncement = () => {
@@ -45,15 +95,25 @@ export default function BrochurePage() {
   const [files, setFiles] = useState(initialFiles);
   const [previewFileId, setPreviewFileId] = useState(null);
 
-  const handleFileUpload = (e) => {
+  const handleFileUpload = async (e) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
+      let uploadedUrl = '';
+
+      try {
+        const uploadResult = await api.uploadImage(file);
+        uploadedUrl = uploadResult.url;
+      } catch (error) {
+        alert('Failed to upload file: ' + error.message);
+        return;
+      }
+
       const newFile = {
-        id: Date.now(),
+        id: 'br_' + Date.now(),
         name: file.name,
         size: file.size,
         type: file.type,
-        url: URL.createObjectURL(file),
+        url: uploadedUrl,
         info: ''
       };
       setFiles([...files, newFile]);
@@ -73,6 +133,16 @@ export default function BrochurePage() {
   const togglePreview = (id) => {
     setPreviewFileId(previewFileId === id ? null : id);
   };
+
+  if (isLoading) {
+    return (
+      <div className="animate-fade-in" style={{ maxWidth: '1400px', margin: '0 auto' }}>
+        <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '2rem', textAlign: 'center', color: '#64748b' }}>
+          Loading brochure content...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fade-in" style={{ maxWidth: '1400px', margin: '0 auto', height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>

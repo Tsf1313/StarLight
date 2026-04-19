@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom'; // NEW: Hook to catch the theme
 import { BookOpen, Download, FileText, ChevronDown, MessageSquare } from 'lucide-react';
 import { initialFiles } from '../../data/mockData';
+import { api } from '../../services/api';
 
 // Mock host announcements from Brochure
 const hostBrochureAnnouncements = [
@@ -10,9 +11,40 @@ const hostBrochureAnnouncements = [
 
 export default function GuestBrochurePage() {
   const [previewFileId, setPreviewFileId] = useState(null);
+  const [files, setFiles] = useState(initialFiles);
+  const [announcements, setAnnouncements] = useState(hostBrochureAnnouncements);
   
   // Catch the custom theme passed down from GuestLayout
   const { theme } = useOutletContext();
+
+  useEffect(() => {
+    const loadBrochureData = async () => {
+      try {
+        const [fileRows, announcementRows] = await Promise.all([
+          api.getGuestBrochures(),
+          api.getGuestAnnouncements(),
+        ]);
+        if (fileRows.length) {
+          setFiles(fileRows);
+        }
+        if (announcementRows.length) {
+          setAnnouncements(
+            announcementRows.map((item) => ({
+              id: item.id,
+              text: item.message,
+              isPublished: true,
+            }))
+          );
+        }
+      } catch (error) {
+        console.error('Failed to load guest brochure data:', error);
+      }
+    };
+
+    loadBrochureData();
+    const intervalId = setInterval(loadBrochureData, 5000);
+    return () => clearInterval(intervalId);
+  }, []);
 
   const togglePreview = (id) => {
     setPreviewFileId(previewFileId === id ? null : id);
@@ -46,7 +78,7 @@ export default function GuestBrochurePage() {
         </h2>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {hostBrochureAnnouncements.filter(a => a.isPublished).map(ann => (
+          {announcements.filter(a => a.isPublished).map(ann => (
             <div key={ann.id} className="animate-scale-in" style={{ background: '#fffbeb', border: '1px solid #fde68a', padding: '1.25rem', borderRadius: '12px', color: '#92400e', fontSize: '0.875rem', lineHeight: '1.5', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
                <span style={{ fontWeight: 800, display: 'block', marginBottom: '0.25rem', fontSize: '1rem' }}>📢 Announcement</span>
                <div style={{ whiteSpace: 'pre-wrap' }}>{ann.text}</div>
@@ -62,14 +94,14 @@ export default function GuestBrochurePage() {
           <FileText size={18} color={theme?.primary_color || "var(--color-primary)"} /> Event Materials
         </h2>
         
-        {initialFiles.length === 0 ? (
+        {files.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#94a3b8', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
             <FileText size={48} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
             <p style={{ fontSize: '0.875rem' }}>No materials uploaded by host yet.</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {initialFiles.map(file => (
+            {files.map(file => (
               <div key={file.id} style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', background: 'white', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }} className="hover-lift">
                 <div 
                   onClick={() => togglePreview(file.id)}

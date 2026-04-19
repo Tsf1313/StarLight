@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Clock, Plus, Edit, X, ChevronDown } from 'lucide-react';
 import { api } from '../../services/api'; 
+import { useEventContext } from '../../contexts/EventContext';
 // Note: We no longer rely on initialTournaments for the initial state, we fetch from the DB!
 
 export default function TournamentPage() {
+  const { selectedEventId } = useEventContext();
   const [activeTab, setActiveTab] = useState('bracket');
   const [isModalOpen, setIsModalOpen] = useState(false);
   
@@ -15,6 +17,9 @@ export default function TournamentPage() {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState(null);
+  const [scheduleItems, setScheduleItems] = useState([]);
+  const [scheduleForm, setScheduleForm] = useState({ title: '', location: '', session_time: '', status: 'upcoming' });
+  const [editingScheduleId, setEditingScheduleId] = useState(null);
 
   const [tournamentForm, setTournamentForm] = useState({
     name: '',
@@ -27,7 +32,7 @@ export default function TournamentPage() {
   // 1. Fetch Tournaments on Load
   const fetchTournaments = async () => {
     try {
-      const data = await api.getTournaments();
+      const data = await api.getTournaments(selectedEventId);
       setTournaments(data);
       if (data.length > 0 && !activeTournamentId) {
         setActiveTournamentId(data[0].id);
@@ -37,9 +42,20 @@ export default function TournamentPage() {
     }
   };
 
+  const fetchSchedules = async () => {
+    try {
+      const data = await api.getSchedules(selectedEventId);
+      setScheduleItems(data);
+    } catch (err) {
+      console.error('Failed to load schedules:', err);
+      setScheduleItems([]);
+    }
+  };
+
   useEffect(() => {
     fetchTournaments();
-  }, []);
+    fetchSchedules();
+  }, [selectedEventId]);
 
   // 2. Handle Edit Modal Open
   const handleEditClick = () => {
@@ -59,7 +75,7 @@ export default function TournamentPage() {
         external_url: editForm.external_url,
         format: editForm.format,
         bracket_data: editForm.bracket_data
-      });
+      }, selectedEventId);
       
       // Refresh the local state
       setTournaments(tournaments.map(t => t.id === editForm.id ? editForm : t));
@@ -77,7 +93,7 @@ export default function TournamentPage() {
     // Construct the new tournament object matching our database schema
     const newTournamentData = {
       id: `t_${Date.now()}`, // Generate unique ID
-      event_id: 'e_001', // Hardcoded for single-event setup
+      event_id: selectedEventId || 'e_001',
       name: tournamentForm.name,
       status: 'Upcoming',
       format: tournamentForm.format,
@@ -95,7 +111,7 @@ export default function TournamentPage() {
     };
 
     try {
-      await api.createTournament(newTournamentData);
+      await api.createTournament(newTournamentData, selectedEventId);
       // Re-fetch to ensure sync with DB
       await fetchTournaments();
       setActiveTournamentId(newTournamentData.id);
@@ -104,6 +120,60 @@ export default function TournamentPage() {
       setTournamentForm({name: '', participants: '', format: 'bracket', previewType: 'bracket', externalUrl: ''});
     } catch (err) {
       alert("Failed to create tournament: " + err.message);
+    }
+  };
+
+  const handleSaveSchedule = async (e) => {
+    e.preventDefault();
+    try {
+      const payload = {
+        id: editingScheduleId || `sc_${Date.now()}`,
+        title: scheduleForm.title,
+        location: scheduleForm.location,
+        session_time: scheduleForm.session_time,
+        status: scheduleForm.status,
+      };
+
+      if (editingScheduleId) {
+        await api.updateSchedule(editingScheduleId, payload, selectedEventId);
+      } else {
+        await api.createSchedule(payload, selectedEventId);
+      }
+
+      await fetchSchedules();
+      setEditingScheduleId(null);
+      setScheduleForm({ title: '', location: '', session_time: '', status: 'upcoming' });
+    } catch (err) {
+      alert('Failed to save schedule: ' + err.message);
+    }
+  };
+
+  const handleEditSchedule = (item) => {
+    const d = item.session_time ? new Date(item.session_time) : null;
+    const dt = d && !Number.isNaN(d.getTime())
+      ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+      : '';
+
+    setEditingScheduleId(item.id);
+    setScheduleForm({
+      title: item.title || '',
+      location: item.location || '',
+      session_time: dt,
+      status: item.status || 'upcoming',
+    });
+  };
+
+  const handleDeleteSchedule = async (id) => {
+    if (!window.confirm('Delete this schedule item?')) return;
+    try {
+      await api.deleteSchedule(id, selectedEventId);
+      await fetchSchedules();
+      if (editingScheduleId === id) {
+        setEditingScheduleId(null);
+        setScheduleForm({ title: '', location: '', session_time: '', status: 'upcoming' });
+      }
+    } catch (err) {
+      alert('Failed to delete schedule: ' + err.message);
     }
   };
 
@@ -371,27 +441,74 @@ export default function TournamentPage() {
 
          {activeTab === 'schedule' && (
            <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '1rem' }}>Upcoming Schedule</h3>
-              {[
-                { date: 'Oct 24, 2026', time: '10:00 AM', match: 'Lions vs Tigers', tournament: 'Esports Spring Cup' },
-                { date: 'Oct 24, 2026', time: '01:00 PM', match: 'Bears vs Wolves', tournament: 'Esports Spring Cup' },
-                { date: 'Oct 25, 2026', time: '09:00 AM', match: 'Semi-Final 1', tournament: 'Tech Summit Championship' },
-                { date: 'Oct 26, 2026', time: '03:00 PM', match: 'Grand Final', tournament: 'Tech Summit Championship' }
-              ].map((item, i) => (
-                <div key={i} className="hover-lift" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0', flexWrap: 'wrap', gap: '1rem' }}>
-                   <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
-                      <div style={{ textAlign: 'center', background: 'white', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #cbd5e1', minWidth: '110px' }}>
-                         <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{item.date}</div>
-                         <div style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--color-primary-dark)' }}>{item.time}</div>
-                      </div>
-                      <div>
-                         <div style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--color-text-main)', marginBottom: '0.25rem' }}>{item.match}</div>
-                         <div style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 500 }}>{item.tournament}</div>
-                      </div>
-                   </div>
-                   <button className="btnOutline scale-btn" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}>Edit Time</button>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>Tournament Schedule</h3>
+
+              <form onSubmit={handleSaveSchedule} style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr 0.8fr', gap: '0.75rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1rem' }}>
+                <input
+                  value={scheduleForm.title}
+                  onChange={(e) => setScheduleForm({ ...scheduleForm, title: e.target.value })}
+                  placeholder="Match / Session title"
+                  required
+                  style={{ padding: '0.7rem', border: '1px solid #cbd5e1', borderRadius: '8px' }}
+                />
+                <input
+                  value={scheduleForm.location}
+                  onChange={(e) => setScheduleForm({ ...scheduleForm, location: e.target.value })}
+                  placeholder="Location"
+                  style={{ padding: '0.7rem', border: '1px solid #cbd5e1', borderRadius: '8px' }}
+                />
+                <input
+                  type="datetime-local"
+                  value={scheduleForm.session_time}
+                  onChange={(e) => setScheduleForm({ ...scheduleForm, session_time: e.target.value })}
+                  required
+                  style={{ padding: '0.7rem', border: '1px solid #cbd5e1', borderRadius: '8px' }}
+                />
+                <select
+                  value={scheduleForm.status}
+                  onChange={(e) => setScheduleForm({ ...scheduleForm, status: e.target.value })}
+                  style={{ padding: '0.7rem', border: '1px solid #cbd5e1', borderRadius: '8px', background: 'white' }}
+                >
+                  <option value="upcoming">Upcoming</option>
+                  <option value="active">Active</option>
+                  <option value="completed">Completed</option>
+                </select>
+                <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '0.5rem' }}>
+                  <button type="submit" className="btnSolid scale-btn" style={{ background: 'var(--color-primary-dark)', padding: '0.55rem 1rem' }}>
+                    {editingScheduleId ? 'Update Item' : 'Add Item'}
+                  </button>
+                  {editingScheduleId && (
+                    <button
+                      type="button"
+                      className="btnOutline scale-btn"
+                      style={{ padding: '0.55rem 1rem' }}
+                      onClick={() => {
+                        setEditingScheduleId(null);
+                        setScheduleForm({ title: '', location: '', session_time: '', status: 'upcoming' });
+                      }}
+                    >
+                      Cancel Edit
+                    </button>
+                  )}
                 </div>
-              ))}
+              </form>
+
+              {scheduleItems.length === 0 ? (
+                <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1rem', color: '#64748b' }}>No schedule items for this event.</div>
+              ) : (
+                scheduleItems.map((item) => (
+                  <div key={item.id} className="hover-lift" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '1rem', borderRadius: '12px', border: '1px solid #e2e8f0', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div>
+                      <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--color-text-main)' }}>{item.title}</div>
+                      <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 500 }}>{item.location || '-'} | {item.session_time ? new Date(item.session_time).toLocaleString() : '-'}</div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button className="btnOutline scale-btn" style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem' }} onClick={() => handleEditSchedule(item)}>Edit</button>
+                      <button className="btnOutline scale-btn" style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem', color: '#b91c1c', borderColor: '#fecaca' }} onClick={() => handleDeleteSchedule(item.id)}>Delete</button>
+                    </div>
+                  </div>
+                ))
+              )}
            </div>
          )}
       </div>

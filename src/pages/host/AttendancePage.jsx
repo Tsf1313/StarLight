@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Users, CheckCircle2, Clock, XCircle, Search, Filter, Download, UserPlus, Upload } from 'lucide-react';
 import { hostAttendees } from '../../data/mockData';
+import { api } from '../../services/api';
+import { useEventContext } from '../../contexts/EventContext';
 
 export default function AttendancePage() {
+   const { selectedEventId } = useEventContext();
    const [attendees, setAttendees] = useState(hostAttendees);
+   const [isLoading, setIsLoading] = useState(true);
    const [searchTerm, setSearchTerm] = useState('');
    const [showFilterOptions, setShowFilterOptions] = useState(false);
    const [ticketFilter, setTicketFilter] = useState('All');
@@ -21,21 +25,38 @@ export default function AttendancePage() {
       source: 'Website',
       status: 'Absent'
    });
+
+   const loadAttendees = async (eventId) => {
+      try {
+         const data = await api.getAttendees(eventId);
+         setAttendees(data);
+      } catch (error) {
+         console.error('Failed to load attendees:', error);
+      } finally {
+         setIsLoading(false);
+      }
+   };
+
+   useEffect(() => {
+      setIsLoading(true);
+      loadAttendees(selectedEventId);
+   }, [selectedEventId]);
+
    const stats = {
       total: attendees.length,
       checkedIn: attendees.filter(a => a.status === 'Checked In').length,
       absent: attendees.filter(a => a.status === 'Absent').length
    };
 
-   const progressPercent = ((stats.checkedIn / stats.total) * 100).toFixed(1);
+   const progressPercent = stats.total > 0 ? ((stats.checkedIn / stats.total) * 100).toFixed(1) : '0.0';
 
-   const handleCheckIn = (id) => {
-      setAttendees(attendees.map(a => {
-         if (a.id === id && a.status === 'Absent') {
-            return { ...a, status: 'Checked In', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
-         }
-         return a;
-      }));
+   const handleCheckIn = async (id) => {
+      try {
+         await api.updateAttendeeStatus(id, 'Checked In', selectedEventId);
+         await loadAttendees(selectedEventId);
+      } catch (error) {
+         alert('Failed to update status: ' + error.message);
+      }
    };
 
    const handleEditClick = (participant) => {
@@ -43,12 +64,15 @@ export default function AttendancePage() {
       setIsEditModalOpen(true);
    };
 
-   const handleSaveEdit = (e) => {
+   const handleSaveEdit = async (e) => {
       e.preventDefault();
-      setAttendees(attendees.map(a =>
-         a.id === editingParticipant.id ? editingParticipant : a
-      ));
-      setIsEditModalOpen(false);
+      try {
+         await api.updateAttendeeDetails(editingParticipant.id, editingParticipant, selectedEventId);
+         await loadAttendees(selectedEventId);
+         setIsEditModalOpen(false);
+      } catch (error) {
+         alert('Failed to save participant: ' + error.message);
+      }
    };
 
    const filteredAttendees = attendees.filter(a => {
@@ -74,16 +98,24 @@ export default function AttendancePage() {
       input.click();
    };
 
-   const handleAddSubmit = (e) => {
+   const handleAddSubmit = async (e) => {
       e.preventDefault();
-      const newId = 'PT' + Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-      setAttendees([...attendees, {
-         ...newParticipant,
-         id: newId,
-         time: newParticipant.status === 'Checked In' ? new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'
-      }]);
-      setIsAddModalOpen(false);
-      setNewParticipant({ name: '', email: '', type: 'Standard', source: 'Website', status: 'Absent' });
+      const newId = 'pt_' + Date.now();
+      try {
+         await api.addAttendee({
+            ...newParticipant,
+            id: newId,
+            event_id: selectedEventId,
+            time: newParticipant.status === 'Checked In'
+               ? new Date().toLocaleString()
+               : '-',
+         }, selectedEventId);
+         await loadAttendees(selectedEventId);
+         setIsAddModalOpen(false);
+         setNewParticipant({ name: '', email: '', type: 'Standard', source: 'Website', status: 'Absent' });
+      } catch (error) {
+         alert('Failed to add participant: ' + error.message);
+      }
    };
 
    const handleExport = () => {
@@ -111,6 +143,16 @@ export default function AttendancePage() {
       link.click();
       document.body.removeChild(link);
    };
+
+   if (isLoading) {
+      return (
+         <div className="animate-fade-in" style={{ maxWidth: '1400px', margin: '0 auto' }}>
+            <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '2rem', textAlign: 'center', color: '#64748b' }}>
+               Loading attendance data...
+            </div>
+         </div>
+      );
+   }
 
    return (
       <div className="animate-fade-in" style={{ maxWidth: '1400px', margin: '0 auto' }}>
