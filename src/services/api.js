@@ -237,6 +237,13 @@ export const api = {
     });
   },
 
+  // NEW: Added deleteTournament
+  deleteTournament: (id, eventId = 'e_001') => {
+    return fetchWithHandler(`${API_BASE_URL}/dashboard/tournaments/${id}?event_id=${encodeURIComponent(eventId)}`, {
+      method: 'DELETE',
+    });
+  },
+
   // ==========================================
   // 4A. EVENT SCHEDULES
   // ==========================================

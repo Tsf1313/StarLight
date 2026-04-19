@@ -283,6 +283,7 @@ app.put('/api/dashboard/attendance/:id', (req, res) => {
 // ==========================================
 // 4. TOURNAMENT MANAGEMENT
 // ==========================================
+// MOVE YOUR TOURNAMENT ROUTES DOWN HERE!
 app.get('/api/dashboard/tournaments', (req, res) => {
     const eventId = req.query.event_id || 'e_001';
     db.all("SELECT * FROM tournaments WHERE event_id = ?", [eventId], (err, rows) => {
@@ -310,6 +311,15 @@ app.put('/api/dashboard/tournaments/:id', (req, res) => {
     db.run(sql, [name, status, preview_type, external_url, format, JSON.stringify(bracket_data), req.params.id, eventId], function(err) {
         if (err) res.status(500).json({ error: err.message });
         else res.json({ updated: this.changes });
+    });
+});
+
+// Delete tournament
+app.delete('/api/dashboard/tournaments/:id', (req, res) => {
+    const eventId = req.query.event_id || 'e_001';
+    db.run("DELETE FROM tournaments WHERE id = ? AND event_id = ?", [req.params.id, eventId], function(err) {
+        if (err) res.status(500).json({ error: err.message });
+        else res.json({ deleted: this.changes });
     });
 });
 
