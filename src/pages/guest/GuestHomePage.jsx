@@ -13,19 +13,28 @@ export default function GuestHomePage() {
 
    useEffect(() => {
       const loadGuestHomeData = async () => {
-         try {
-            const [announcementRows, scheduleRows] = await Promise.all([
-               api.getGuestAnnouncements(),
-               api.getGuestSchedule(),
-            ]);
+         const [eventRes, announcementsRes, scheduleRes] = await Promise.allSettled([
+            api.getSelectedEventForGuests(),
+            api.getGuestAnnouncements(),
+            api.getGuestSchedule(),
+         ]);
 
-            const guestEventData = await api.getSelectedEventForGuests();
-            setGuestEvent(guestEventData?.event || null);
+         if (eventRes.status === 'fulfilled') {
+            setGuestEvent(eventRes.value?.event || null);
+         } else {
+            console.error('Failed to load selected guest event:', eventRes.reason);
+         }
 
-            setAnnouncements(Array.isArray(announcementRows) ? announcementRows : []);
-            setSchedule(Array.isArray(scheduleRows) ? scheduleRows : []);
-         } catch (error) {
-            console.error('Failed to load guest home data:', error);
+         if (announcementsRes.status === 'fulfilled') {
+            setAnnouncements(Array.isArray(announcementsRes.value) ? announcementsRes.value : []);
+         } else {
+            console.error('Failed to load guest announcements:', announcementsRes.reason);
+         }
+
+         if (scheduleRes.status === 'fulfilled') {
+            setSchedule(Array.isArray(scheduleRes.value) ? scheduleRes.value : []);
+         } else {
+            console.error('Failed to load guest schedule:', scheduleRes.reason);
          }
       };
 

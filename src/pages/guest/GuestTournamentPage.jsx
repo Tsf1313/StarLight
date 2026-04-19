@@ -14,22 +14,31 @@ export default function GuestTournamentPage() {
 
   useEffect(() => {
     const fetchTournaments = async () => {
-      try {
-        const [data, scheduleRows] = await Promise.all([
-          api.getGuestTournaments(),
-          api.getGuestSchedule(),
-        ]);
+      const [tournamentsRes, scheduleRes] = await Promise.allSettled([
+        api.getGuestTournaments(),
+        api.getGuestSchedule(),
+      ]);
+
+      if (tournamentsRes.status === 'fulfilled') {
+        const data = Array.isArray(tournamentsRes.value) ? tournamentsRes.value : [];
         setTournaments(data);
-        setSchedule(scheduleRows);
-        if (data.length > 0 && !activeTournamentId) {
-          setActiveTournamentId(data[0].id);
-        }
-      } catch (err) {
-        console.error("Failed to load tournaments:", err);
+        setActiveTournamentId((prevId) => {
+          if (!data.length) return null;
+          if (prevId && data.some((t) => String(t.id) === String(prevId))) return prevId;
+          return data[0].id;
+        });
+      } else {
+        console.error('Failed to load guest tournaments:', tournamentsRes.reason);
+      }
+
+      if (scheduleRes.status === 'fulfilled') {
+        setSchedule(Array.isArray(scheduleRes.value) ? scheduleRes.value : []);
+      } else {
+        console.error('Failed to load guest schedule:', scheduleRes.reason);
       }
     };
     fetchTournaments();
-    const intervalId = setInterval(fetchTournaments, 5000);
+    const intervalId = setInterval(fetchTournaments, 2000);
     return () => clearInterval(intervalId);
   }, []);
 
