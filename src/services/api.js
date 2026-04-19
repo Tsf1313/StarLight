@@ -7,6 +7,34 @@ const API_BASE_URL = isLocal
   ? 'http://localhost:3000/api'
   : CLOUD_API_BASE_URL;
 
+const getApiOrigin = () => {
+  try {
+    return new URL(API_BASE_URL).origin;
+  } catch {
+    return '';
+  }
+};
+
+const normalizeVenueImageUrl = (rawUrl) => {
+  if (!rawUrl) return null;
+  if (typeof rawUrl !== 'string') return rawUrl;
+
+  // Keep already-correct /files URLs and regular absolute URLs.
+  if (rawUrl.includes('/files/')) return rawUrl;
+
+  // Convert legacy placeholder R2 URLs to current Worker file route.
+  if (rawUrl.includes('your-account.r2.dev')) {
+    const parts = rawUrl.split('/');
+    const filename = parts[parts.length - 1];
+    const origin = getApiOrigin();
+    if (origin && filename) {
+      return `${origin}/files/${filename}`;
+    }
+  }
+
+  return rawUrl;
+};
+
 const parseResponse = async (response) => {
   const text = await response.text();
   let data = {};
@@ -100,7 +128,7 @@ const mapBrochureToApi = (row, eventId = 'e_001') => ({
 const mapVenueFromApi = (row) => ({
   id: String(row.id),
   name: row.name,
-  image: row.image_url,
+  image: normalizeVenueImageUrl(row.image_url),
   zones: Array.isArray(row.zones) ? row.zones : [],
   activeZoneId: null,
 });
