@@ -1,8 +1,8 @@
 // src/services/api.js
 
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const CLOUD_API_BASE_URL = 'https://api.eventflow.hamstersame.org/api';
-const CLOUD_API_FALLBACK_URL = 'https://eventflow-api.edmundtingyanyi0529.workers.dev/api';
+const CLOUD_API_BASE_URL = 'https://eventflow-api.edmundtingyanyi0529.workers.dev/api';
+const CLOUD_API_FALLBACK_URL = 'https://api.eventflow.hamstersame.org/api';
 const API_BASE_URL = isLocal
   ? 'http://localhost:3000/api'
   : CLOUD_API_BASE_URL;
@@ -200,21 +200,11 @@ export const api = {
     const formData = new FormData();
     formData.append('file', imageFile);
 
-    const response = await fetch(`${API_BASE_URL}/upload`, {
+    return fetchWithHandler(`${API_BASE_URL}/upload`, {
       method: 'POST',
       body: formData, // The browser automatically sets the correct Multipart headers for files
     });
-    
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || 'Image upload failed');
-    }
-    return response.json(); 
   },
-  
-  getFeedbackFormConfig: () => fetchWithHandler(`${API_BASE_URL}/dashboard/feedback-form`),
-
-  getActivityLogs: () => fetchWithHandler(`${API_BASE_URL}/dashboard/activity`),
 
   // ==========================================
   // 3. ATTENDANCE MANAGEMENT
