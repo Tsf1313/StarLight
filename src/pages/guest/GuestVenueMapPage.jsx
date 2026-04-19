@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useOutletContext } from 'react-router-dom'; // NEW: Hook to catch the theme
+import { useOutletContext } from 'react-router-dom';
 import { Map, MapPin } from 'lucide-react';
-import { initialMaps } from '../../data/mockData';
 import { api } from '../../services/api';
 
 export default function GuestVenueMapPage() {
-  const [maps, setMaps] = useState(initialMaps);
-  const [activeMapId, setActiveMapId] = useState(initialMaps.length > 0 ? initialMaps[0].id : null);
+  const [maps, setMaps] = useState([]);
+  const [activeMapId, setActiveMapId] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Pan and Zoom state
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -22,29 +22,26 @@ export default function GuestVenueMapPage() {
 
   useEffect(() => {
     const loadMaps = async () => {
+      setIsLoading(true);
       try {
         const rows = await api.getGuestVenueMaps();
         if (rows.length) {
           setMaps(rows);
-          setActiveMapId((prevId) => {
-            const prev = prevId ? String(prevId) : null;
-            if (prev && rows.some((m) => String(m.id) === prev)) {
-              return prevId;
-            }
-            return String(rows[0].id);
-          });
+          setActiveMapId(String(rows[0].id));
         } else {
           setMaps([]);
           setActiveMapId(null);
         }
       } catch (error) {
         console.error('Failed to load venue maps:', error);
+        setMaps([]);
+        setActiveMapId(null);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     loadMaps();
-    const intervalId = setInterval(loadMaps, 5000);
-    return () => clearInterval(intervalId);
   }, []);
 
   // Reset pan when changing maps; zoom is re-fit by image load/effect below
@@ -137,7 +134,12 @@ export default function GuestVenueMapPage() {
         </div>
       </div>
 
-      {maps.length === 0 ? (
+      {isLoading ? (
+        <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#94a3b8', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'inline-block', padding: '1rem', animation: 'spin 1s linear infinite' }}>↻</div>
+            <p style={{ fontSize: '0.875rem' }}>Loading venue maps...</p>
+        </div>
+      ) : maps.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#94a3b8', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
             <Map size={48} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
             <p style={{ fontSize: '0.875rem' }}>No layout maps available yet.</p>

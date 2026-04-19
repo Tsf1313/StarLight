@@ -58,6 +58,7 @@ export default {
       if (pathname === '/api/guest/feedback' && method === 'POST') return handleGuestFeedback(request, env);
       if (pathname === '/api/dashboard/activity') return handleGetActivity(request, env);
       if (pathname === '/api/upload' && method === 'POST') return handleFileUpload(request, env);
+      if (pathname.match(/^\/files\/.+$/) && method === 'GET') return handleServeFile(request, env, pathname);
 
       return jsonResponse({ error: 'Not Found' }, 404);
     } catch (error) {
@@ -708,12 +709,45 @@ async function handleFileUpload(request, env) {
       },
     });
 
-    // Return public URL (you'll need to set up a custom domain for R2)
-    const imageUrl = `https://${env.R2_DOMAIN || 'your-r2-domain.com'}/${filename}`;
+    // Return URL pointing to our /files/ endpoint (Worker will serve from R2)
+    const requestUrl = new URL(request.url);
+    const origin = `${requestUrl.protocol}//${requestUrl.host}`;
+    const imageUrl = `${origin}/files/${filename}`;
 
     return jsonResponse({ url: imageUrl });
   } catch (error) {
     console.error('Upload error:', error);
+    return jsonResponse({ error: error.message }, 500);
+  }
+}
+
+// Serve files from R2 bucket
+async function handleServeFile(request, env, pathname) {
+  try {
+    // Extract filename from /files/filename
+    const filename = pathname.replace(/^\/files\//, '');
+    
+    if (!filename) {
+      return jsonResponse({ error: 'Invalid file path' }, 400);
+    }
+
+    // Get file from R2
+    const file = await env.UPLOADS.get(filename);
+    
+    if (!file) {
+      return jsonResponse({ error: 'File not found' }, 404);
+    }
+
+    // Return file with appropriate CORS headers
+    return new Response(file.body, {
+      headers: {
+        'Content-Type': file.httpMetadata?.contentType || 'application/octet-stream',
+        'Cache-Control': 'public, max-age=31536000',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+  } catch (error) {
+    console.error('File serving error:', error);
     return jsonResponse({ error: error.message }, 500);
   }
 }
